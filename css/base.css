@@ -1,0 +1,33 @@
+/* base.css - core layout, title, general layout */
+
+:root{
+  --accent-cyan: #00ffff;
+  --accent-green: #00ff66;
+  --accent-warn: #ff9900;
+  --muted: #6b6b6b;
+  --bg-panel: rgba(0,0,0,0.85);
+}
+
+/* Reset + body */
+* { box-sizing: border-box; }
+html,body { height:100%; margin:0; font-family:'Orbitron',sans-serif; background:radial-gradient(circle at center,#050505 0%,#000 100%); color:var(--accent-green); -webkit-font-smoothing:antialiased; }
+
+.top-bar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px 18px;
+}
+
+.left-controls, .right-controls { display:flex; align-items:center; gap:10px; }
+
+.title { margin:0; text-align:center; flex:1; font-size:18px; color:var(--accent-cyan); text-shadow:0 0 8px var(--accent-cyan); }
+.beta { font-size:11px; color:var(--muted); margin-left:8px; }
+
+.console-container { max-width:1200px; margin:12px auto; background:var(--bg-panel); border:2px solid var(--accent-green); border-radius:12px; padding:12px; box-shadow:0 0 20px rgba(0,255,0,0.06); min-height:calc(100vh - 120px); }
+.menu-bar { display:flex; justify-content:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+
+/* Generic control button */
+.control-btn { background:none; border:2px solid #f0f; padding:6px 10px; color:#f0f; border-radius:8px; cursor:pointer; }
+.control-btn:hover { background:#f0f; color:#000; }

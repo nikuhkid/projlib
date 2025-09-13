@@ -1,0 +1,6 @@
+/* dark.css - default neon terminal */
+body.theme-dark { background:radial-gradient(circle at center,#050505 0%,#000 100%); color:var(--accent-green); font-family:'Orbitron',sans-serif; }
+body.theme-dark .title { color:var(--accent-cyan); }
+body.theme-dark .dropbtn { background:#111; color:var(--accent-green); border:1px solid var(--accent-green); }
+body.theme-dark .dropdown-content { background:#000; color:var(--accent-green); border:1px solid var(--accent-green); }
+body.theme-dark .action-btn { border-color:var(--accent-warn); color:var(--accent-warn); }

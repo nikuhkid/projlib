@@ -1,0 +1,187 @@
+/* ============================================================
+   PROJECT: ProjLib Control Node [BETA]
+   - Do NOT rename this file (style.css) or linked reference.
+   - Keep project title unchanged in index.html.
+   ============================================================ */
+
+body {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  background: #111;
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.console-container {
+  width: 95%;
+  max-width: 1400px;
+  margin: 20px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header .title {
+  flex-grow: 1;
+  text-align: center;
+  margin: 0;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* SWITCH */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.switch input {
+  display: none;
+}
+.switch .slider {
+  width: 40px;
+  height: 20px;
+  background: #555;
+  border-radius: 20px;
+  margin-right: 5px;
+  position: relative;
+}
+.switch .slider::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #eee;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* SCANNER */
+.scanner {
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+}
+.hidden {
+  display: none;
+}
+.scanner input {
+  flex-grow: 1;
+  padding: 5px;
+  font-size: 14px;
+}
+
+/* DROPDOWNS */
+.dropdowns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.select-container {
+  display: flex;
+  align-items: center;
+  background: #222;
+  border-radius: 8px;
+  padding: 5px;
+}
+.select-container i {
+  margin-right: 8px;
+}
+.select-container select {
+  flex-grow: 1;
+  font-size: 12px;
+  background: transparent;
+  color: #eee;
+  border: none;
+  outline: none;
+  height: 28px;
+}
+
+/* ACTION BUTTONS */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.action-buttons button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #333;
+  color: #eee;
+  cursor: pointer;
+}
+.action-buttons button:hover {
+  background: #444;
+}
+
+/* URL readout */
+#currentUrl {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 6px;
+  border: 1px solid #333;
+  background: #000;
+  color: #0f0;
+  font-family: monospace;
+}
+
+/* PROXY CONTAINER */
+#proxyContainer {
+  position: relative;
+  background: #000;
+  border: 2px solid #333;
+  border-radius: 10px;
+  height: 70vh;
+  overflow: hidden;
+}
+#proxyFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+.idle-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #666;
+}
+.loadingOverlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  align-items: center;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #666;
+  border-top-color: #0f0;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

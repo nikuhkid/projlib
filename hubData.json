@@ -1,0 +1,74 @@
+{
+  "defaultHome": "https://archive.org",
+  "whitelist": [
+    "wix.com",
+    "youtube.com"
+  ],
+  "categories": [
+    {
+      "id": "brain",
+      "label": "Brain Tease",
+      "links": [
+        { "name": "Mind Games", "url": "https://www.mindgames.com/" },
+        { "name": "Brainzilla", "url": "https://www.brainzilla.com/" },
+        { "name": "Puzzle Prime", "url": "https://www.puzzleprime.com/" }
+      ]
+    },
+    {
+      "id": "play",
+      "label": "Arcade",
+      "links": [
+        { "name": "NES Ninja", "url": "https://nesninja.com/" },
+        { "name": "IO Games", "url": "https://iogamesio.org/" },
+        { "name": "Emulators", "url": "https://gam.onl" },
+        { "name": "Poker", "url": "https://gameforge.com/en-US/littlegames/poker-with-friends/" },
+        { "name": "Cards Against Humanity", "url": "https://www.cardsagainstformality.io/" }
+      ]
+    },
+    {
+      "id": "anime",
+      "label": "Animation",
+      "links": [
+        { "name": "Anitube", "url": "https://www.anitube.news/" },
+        { "name": "AniWatch", "url": "https://aniwatchtv.to/" },
+        { "name": "AniWave", "url": "https://aniwave.se/" }
+      ]
+    },
+    {
+      "id": "read",
+      "label": "Readable",
+      "links": [
+        { "name": "MangaHere", "url": "https://www.mangahere.cc/" },
+        { "name": "Manhwaden", "url": "https://www.manhwaden.com/" },
+        { "name": "ReadComicOnline", "url": "https://readcomiconline.li/" },
+        { "name": "Project Gutenberg", "url": "https://gutenberg.org/" },
+        { "name": "READanyBOOK", "url": "https://en.readanybook.com/" },
+        { "name": "ReadAllComics", "url": "https://readallcomics.com/" },
+        { "name": "TheBlackVault", "url": "https://www.theblackvault.com/documentarchive/" }
+      ]
+    },
+    {
+      "id": "watch",
+      "label": "Watchable",
+      "links": [
+        { "name": "Free Worldwide TV", "url": "https://tv.garden" },
+        { "name": "Flixer", "url": "https://flixer.su/" },
+        { "name": "CouchTuner", "url": "https://www.couchtuner.show/" },
+        { "name": "Movie DB", "url": "https://moviedb.wiki/" },
+        { "name": "HydraFlix", "url": "https://www.hydraflix.vip/" },
+        { "name": "WatchSeries", "url": "https://watchseries.bar/" },
+        { "name": "Sports", "url": "https://nflsupport.com/" }
+      ]
+    },
+    {
+      "id": "daily",
+      "label": "Dailies",
+      "links": [
+        { "name": "Termo", "url": "https://term.ooo/" },
+        { "name": "Bandle", "url": "https://bandle.app/daily" },
+        { "name": "Waffle", "url": "https://wordleplay.com/waffle" },
+        { "name": "Musicle", "url": "https://musicle.app" }
+      ]
+    }
+  ]
+}

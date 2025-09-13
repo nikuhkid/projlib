@@ -1,0 +1,8 @@
+/* glitch.css - neon RGB shifts */
+body.theme-glitch { background:#111; color:#fff; font-family:'Orbitron',sans-serif; }
+body.theme-glitch .title { animation:glitch 1.5s infinite; color:#fff; }
+@keyframes glitch {
+  0%{ text-shadow:2px 0 red,-2px 0 blue;} 50%{ text-shadow:-2px 0 lime,2px 0 yellow; } 100%{ text-shadow:2px 0 red,-2px 0 blue;}
+}
+body.theme-glitch .dropbtn { background:#222; color:#f0f; border:1px solid #f0f; }
+body.theme-glitch .dropdown-content { background:#111; color:#f0f; border:1px solid #f0f; }

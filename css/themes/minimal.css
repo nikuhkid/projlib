@@ -1,0 +1,5 @@
+/* minimal.css - calm and simple */
+body.theme-minimal { background:#fafafa; color:#111; font-family:Arial, sans-serif; }
+body.theme-minimal .title { color:#111; text-shadow:none; }
+body.theme-minimal .dropbtn { background:#fff; color:#111; border:1px solid #ddd; }
+body.theme-minimal .dropdown-content { background:#fff; color:#111; border:1px solid #ddd; }
