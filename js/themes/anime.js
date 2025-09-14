@@ -17,7 +17,7 @@
     p.style.height = '18px';
     p.style.borderRadius = '50%';
     p.style.opacity = '0.85';
-    p.style.zIndex = 10010;
+  p.style.zIndex = 2147483647;
     p.style.pointerEvents = 'none';
     p.style.transition = 'all 0.7s cubic-bezier(.22,1.61,.36,1)';
     document.body.appendChild(p);

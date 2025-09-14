@@ -12,9 +12,46 @@ body.theme-minimal .dropbtn {
 	background: #232323;
 	color: #e0e0e0;
 	border: 1px solid #444;
+	box-shadow: none;
+}
+body.theme-minimal #scannerBtn {
+	border: 1px solid #444;
+	box-shadow: none;
+}
+body.theme-minimal #themeBtn {
+	border: 1px solid #444;
+	box-shadow: none;
 }
 body.theme-minimal .dropdown-content {
 	background: #232323;
 	color: #e0e0e0;
 	border: 1px solid #444;
+	box-shadow: none;
+}
+body.theme-minimal .select-container select {
+	border: 1px solid #444;
+	box-shadow: none;
+}
+body.theme-minimal #proxyContainer {
+	border: 1px solid #444;
+	box-shadow: none;
+}
+
+body.theme-minimal #homeBtn {
+	border: 1px solid #444;
+	box-shadow: none;
+}
+body.theme-minimal #refreshBtn {
+	border: 1px solid #444;
+	box-shadow: none;
+}
+body.theme-minimal .switch {
+	border: 1px solid #444;
+	box-shadow: none;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+body.theme-minimal #fullscreenBtn {
+	border: 1px solid #444;
+	box-shadow: none;
 }

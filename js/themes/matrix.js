@@ -9,14 +9,15 @@
   for (let i = 0x30A1; i <= 0x30FA; ++i) katakana.push(String.fromCharCode(i));
 
   function spawnChar(){
-    const r = container.getBoundingClientRect();
+    // Align rain to the iframe area
+    const iframe = document.getElementById('proxyFrame');
+    const r = iframe ? iframe.getBoundingClientRect() : container.getBoundingClientRect();
     const c = document.createElement('div');
     c.className = 'theme-effect matrix-char';
     c.style.position = 'absolute';
-    // Center horizontally: align with the main content (console-container)
-    // Use the width of the container and offset from its left
-    const minX = r.left + r.width * 0.2;
-    const maxX = r.left + r.width * 0.8 - 18;
+    // Use the width of the iframe and offset from its left
+    const minX = r.left;
+    const maxX = r.left + r.width - 18;
     c.style.left = Math.floor(minX + Math.random() * (maxX - minX)) + 'px';
     c.style.top = '-20px';
     c.style.fontFamily = 'monospace';

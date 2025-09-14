@@ -5,20 +5,14 @@
   const INTERVAL_MS = 1800; // more frequent
   let id = null;
 
-  // Helper to get a random position near the main UI (console-container)
+  // Helper to get a random position within the iframe area
   function getRandomPosition() {
-    const container = document.querySelector('.console-container');
-    const r = container.getBoundingClientRect();
-    // Pop near the edge of the main UI, but not over the iframe
-    const margin = 40;
-    const side = Math.random() > 0.5 ? 'left' : 'right';
-    let x, y;
-    if (side === 'left') {
-      x = r.left + Math.random() * (r.width * 0.25);
-    } else {
-      x = r.right - 100 - Math.random() * (r.width * 0.25);
-    }
-    y = r.top + margin + Math.random() * (r.height - 2 * margin - 100);
+    const iframe = document.getElementById('proxyFrame');
+    const r = iframe ? iframe.getBoundingClientRect() : document.body.getBoundingClientRect();
+    // Pop anywhere within the iframe area, with a margin
+    const margin = 10;
+    const x = r.left + margin + Math.random() * (r.width - 100 - 2 * margin);
+    const y = r.top + margin + Math.random() * (r.height - 100 - 2 * margin);
     return {x, y};
   }
 
@@ -32,12 +26,12 @@
     img.style.top = y + 'px';
     img.style.width = '100px';
     img.style.height = '100px';
-    img.style.zIndex = 0; // always below UI
+  img.style.zIndex = -1; // always below everything
     img.style.pointerEvents = 'none';
     img.style.opacity = '1';
-    // Random rotation
-    const rot = (Math.random() * 90 - 45).toFixed(1);
-    img.style.transform = `rotate(${rot}deg)`;
+  // Random rotation between -45 and 45 degrees
+  const rot = (Math.random() * 90 - 45).toFixed(1);
+  img.style.transform = `rotate(${rot}deg)`;
     document.body.appendChild(img);
     setTimeout(() => { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 900); }, 1800);
   }
