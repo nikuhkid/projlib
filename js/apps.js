@@ -58,13 +58,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadUrl(url);
   }
 
-  // Load URL into iframe
-  function loadUrl(url) {
-    if (!url) return;
-    // Validate URL using ProjLib.isValidUrl
-    let validUrl = url;
-    if (!window.ProjLib.isValidUrl(url)) {
-      validUrl = 'https://swisscows.com/web?query=' + encodeURIComponent(url);
+  // Load URL or search into iframe
+  function loadUrl(input) {
+    if (!input) return;
+    let validUrl = input.trim();
+    // List of common TLDs
+    const tlds = ['.com','.net','.org','.io','.ai','.co','.dev','.app','.info','.xyz','.gov','.edu','.me','.us','.uk','.ca','.jp','.de','.fr','.es','.it','.nl','.ru','.br','.au'];
+    const isLikelyUrl = tlds.some(tld => validUrl.endsWith(tld) || validUrl.includes(tld + '/'));
+    if (isLikelyUrl && !/^https?:\/\//.test(validUrl)) {
+      validUrl = 'https://' + validUrl;
+    }
+    if (!isLikelyUrl) {
+      // Bing search
+      validUrl = 'https://www.bing.com/search?q=' + encodeURIComponent(input);
     }
     // Proxy logic
     if (proxyToggle.checked) {

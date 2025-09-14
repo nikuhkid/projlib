@@ -1,5 +1,20 @@
 /* minimal.css - calm and simple */
-body.theme-minimal { background:#eaeaea; color:#333; font-family:Arial, sans-serif; }
-body.theme-minimal .title { color:#333; text-shadow:none; }
-body.theme-minimal .dropbtn { background:#eaeaea; color:#333; border:1px solid #bbb; }
-body.theme-minimal .dropdown-content { background:#eaeaea; color:#333; border:1px solid #bbb; }
+body.theme-minimal {
+	background: #181818;
+	color: #e0e0e0;
+	font-family: Arial, sans-serif;
+}
+body.theme-minimal .title {
+	color: #e0e0e0;
+	text-shadow: none;
+}
+body.theme-minimal .dropbtn {
+	background: #232323;
+	color: #e0e0e0;
+	border: 1px solid #444;
+}
+body.theme-minimal .dropdown-content {
+	background: #232323;
+	color: #e0e0e0;
+	border: 1px solid #444;
+}

@@ -1,11 +1,40 @@
-*** Move File: /workspaces/projlib/css/themes/dark.css -> /workspaces/projlib/css/themes/main.css
-/* dark.css - default neon terminal */
+/* main.css - default neon terminal */
 body.theme-main {
 	background: linear-gradient(135deg, #0a0a0f 0%, #181825 100%);
 	color: #7fffd4;
 	font-family: 'Share Tech Mono', 'Orbitron', monospace;
 	letter-spacing: 1.5px;
 	box-shadow: 0 0 40px #0ff2 inset;
+}
+
+body.theme-main .console-container,
+body.theme-main .dropdowns-grid,
+body.theme-main .action-buttons,
+body.theme-main #proxyForm,
+body.theme-main #proxyContainer,
+body.theme-main .select-container,
+body.theme-main .header {
+		border: 2.5px solid;
+		border-radius: 14px;
+		box-shadow:
+			0 0 16px 4px #0ff8,
+			0 0 32px 8px #ff00ea,
+			0 0 48px 12px #00ffea,
+			0 0 24px 6px #ffea00,
+			0 0 32px 8px #0ff8,
+			0 0 64px 16px #ff00ea;
+		border-image: linear-gradient(90deg, #0ff8, #ff00ea, #00ffea, #ffea00, #0ff8) 1;
+		background-clip: padding-box;
+		transition: box-shadow 0.3s;
+}
+
+body.theme-main .dropbtn,
+body.theme-main .action-btn,
+body.theme-main .dropdown-content {
+	border: 2px solid;
+	border-image: linear-gradient(90deg, #0ff8, #ff00ea, #00ffea, #ffea00, #0ff8) 1;
+	box-shadow: 0 0 12px #0ff8, 0 0 24px #ff00ea, 0 0 32px #00ffea;
+	transition: box-shadow 0.3s;
 }
 body.theme-main .title {
 	color: #7fffd4;

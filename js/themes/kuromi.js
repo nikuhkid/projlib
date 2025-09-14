@@ -1,28 +1,24 @@
 // kuromi.js - spawn kuromi sprites randomly inside console-container
 (function(){
 
-  const INTERVAL_MS = 4200;
+
+  const INTERVAL_MS = 1800; // more frequent
   let id = null;
 
-  // Helper to get a random position not overlapping the iframe
+  // Helper to get a random position near the main UI (console-container)
   function getRandomPosition() {
-    const bodyRect = document.body.getBoundingClientRect();
-    const iframe = document.getElementById('proxyFrame');
-    const iframeRect = iframe ? iframe.getBoundingClientRect() : {left:0,top:0,right:0,bottom:0};
-    let x, y, tries = 0;
-    do {
-      x = Math.floor(Math.random() * (window.innerWidth - 100));
-      y = Math.floor(Math.random() * (window.innerHeight - 100));
-      tries++;
-      // Avoid overlap with iframe (allow a 20px margin)
-    } while (
-      iframe &&
-      x + 100 > iframeRect.left - 20 &&
-      x < iframeRect.right + 20 &&
-      y + 100 > iframeRect.top - 20 &&
-      y < iframeRect.bottom + 20 &&
-      tries < 10
-    );
+    const container = document.querySelector('.console-container');
+    const r = container.getBoundingClientRect();
+    // Pop near the edge of the main UI, but not over the iframe
+    const margin = 40;
+    const side = Math.random() > 0.5 ? 'left' : 'right';
+    let x, y;
+    if (side === 'left') {
+      x = r.left + Math.random() * (r.width * 0.25);
+    } else {
+      x = r.right - 100 - Math.random() * (r.width * 0.25);
+    }
+    y = r.top + margin + Math.random() * (r.height - 2 * margin - 100);
     return {x, y};
   }
 
@@ -36,11 +32,14 @@
     img.style.top = y + 'px';
     img.style.width = '100px';
     img.style.height = '100px';
-    img.style.zIndex = 9999;
+    img.style.zIndex = 0; // always below UI
     img.style.pointerEvents = 'none';
     img.style.opacity = '1';
+    // Random rotation
+    const rot = (Math.random() * 90 - 45).toFixed(1);
+    img.style.transform = `rotate(${rot}deg)`;
     document.body.appendChild(img);
-    setTimeout(() => { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 700); }, 2200);
+    setTimeout(() => { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 900); }, 1800);
   }
 
   id = setInterval(spawn, INTERVAL_MS);

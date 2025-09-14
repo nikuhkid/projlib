@@ -10,7 +10,7 @@
     img.style.top = (e.clientY - 50) + 'px';
     img.style.width = '100px';
     img.style.height = '100px';
-    img.style.zIndex = 9999;
+  img.style.zIndex = 10010;
     img.style.pointerEvents = 'none';
     document.body.appendChild(img);
     setTimeout(()=> { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 400); }, 650);
