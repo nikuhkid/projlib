@@ -1,5 +1,5 @@
 /* cyberpunk.css - neon gradient */
-body.theme-cyberpunk { background:linear-gradient(90deg,#ff00ff,#00ffff); color:#000; font-family:'Orbitron',sans-serif; }
-body.theme-cyberpunk .title { color:#fff; text-shadow:0 0 10px #0ff; }
-body.theme-cyberpunk .dropbtn { background:linear-gradient(90deg,#ff0080,#00eaff); color:#000; border:2px solid #ff00ff; }
-body.theme-cyberpunk .dropdown-content { background:linear-gradient(90deg,#110011,#001018); color:#0ff; border:2px solid #ff00ff; }
+body.theme-cyberpunk { background:linear-gradient(90deg,#2a003a,#003a3a); color:#b0e0e6; font-family:'Orbitron',sans-serif; }
+body.theme-cyberpunk .title { color:#b0e0e6; text-shadow:0 0 10px #0ff4; }
+body.theme-cyberpunk .dropbtn { background:linear-gradient(90deg,#3a005a,#005a5a); color:#b0e0e6; border:2px solid #0ff4; }
+body.theme-cyberpunk .dropdown-content { background:linear-gradient(90deg,#1a0021,#001018); color:#b0e0e6; border:2px solid #0ff4; }

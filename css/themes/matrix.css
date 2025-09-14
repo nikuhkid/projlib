@@ -1,5 +1,5 @@
 /* matrix.css - green on black */
-body.theme-matrix { background:#000; color:#0f0; font-family:'Share Tech Mono',monospace; }
-body.theme-matrix .title { color:#0f0; text-shadow:0 0 8px #0f0; }
-body.theme-matrix .dropbtn { background:#000; color:#0f0; border:1px solid #0a0; }
-body.theme-matrix .dropdown-content { background:#000; color:#0f0; border:1px solid #0a0; }
+body.theme-matrix { background:#101010; color:#6fffa7; font-family:'Share Tech Mono',monospace; }
+body.theme-matrix .title { color:#6fffa7; text-shadow:0 0 8px #2e8b57; }
+body.theme-matrix .dropbtn { background:#101010; color:#6fffa7; border:1px solid #2e8b57; }
+body.theme-matrix .dropdown-content { background:#101010; color:#6fffa7; border:1px solid #2e8b57; }

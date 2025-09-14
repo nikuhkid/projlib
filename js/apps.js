@@ -6,7 +6,6 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
   const proxyFrame = document.getElementById("proxyFrame");
-  const currentUrl = document.getElementById("currentUrl");
   const proxyForm = document.getElementById("proxyForm");
   const urlInput = document.getElementById("urlInput");
   const proxyToggle = document.getElementById("proxyToggle");
@@ -67,12 +66,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!window.ProjLib.isValidUrl(url)) {
       validUrl = 'https://swisscows.com/web?query=' + encodeURIComponent(url);
     }
+    // Proxy logic
+    if (proxyToggle.checked) {
+      validUrl = 'https://proxy.liyao.space/------' + validUrl;
+    }
     initialMessage.style.display = "none";
     loadingOverlay.style.display = "flex";
 
     setTimeout(() => {
       proxyFrame.src = validUrl;
-      currentUrl.value = validUrl;
       loadingOverlay.style.display = "none";
     }, 1000);
   }
@@ -90,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Modular theme system
   const themes = [
-    { name: "dark", css: "css/themes/dark.css", js: "js/themes/dark.js" },
+  { name: "main", css: "css/themes/main.css", js: "js/themes/main.js" },
     { name: "kuromi", css: "css/themes/kuromi.css", js: "js/themes/kuromi.js" },
     { name: "comic", css: "css/themes/comic.css", js: "js/themes/comic.js" },
     { name: "matrix", css: "css/themes/matrix.css", js: "js/themes/matrix.js" },

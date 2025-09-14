@@ -1,5 +1,5 @@
 /* comic.css - pop-art look */
-body.theme-comic { background:#fff8e7; color:#111; font-family:'Bangers',cursive; }
-body.theme-comic .title { color:#ffcc00; text-shadow:3px 3px #000; }
-body.theme-comic .dropbtn { background:#ffcc00; color:#000; border:2px solid #000; border-radius:8px; }
-body.theme-comic .dropdown-content { background:#fff; color:#000; border:2px solid #000; }
+body.theme-comic { background:#f7e6c7; color:#222; font-family:'Bangers',cursive; }
+body.theme-comic .title { color:#e6b700; text-shadow:2px 2px #222; }
+body.theme-comic .dropbtn { background:#e6b700; color:#222; border:2px solid #222; border-radius:8px; }
+body.theme-comic .dropdown-content { background:#f7e6c7; color:#222; border:2px solid #222; }

@@ -22,14 +22,18 @@
     <!-- HEADER -->
     <header class="header">
       <h1 class="title">ProjLib Control Node [BETA]</h1>
-      <div class="controls">
-        <label class="switch">
-          <input type="checkbox" id="proxyToggle" />
-          <span class="slider"></span>
-          <span class="label">Proxy Mode</span>
-        </label>
-        <button id="scannerBtn"><i class="ri-search-eye-line"></i> Scanner</button>
-        <button id="themeBtn"><i class="ri-paint-brush-line"></i> Theme</button>
+      <div class="header-row">
+        <div class="header-left">
+          <label class="switch">
+            <input type="checkbox" id="proxyToggle" />
+            <span class="slider"></span>
+            <span class="label">Proxy Mode</span>
+          </label>
+        </div>
+        <div class="header-right">
+          <button id="scannerBtn"><i class="ri-search-eye-line"></i> Scanner</button>
+          <button id="themeBtn"><i class="ri-paint-brush-line"></i> Theme</button>
+        </div>
       </div>
     </header>
 
@@ -56,8 +60,7 @@
       <button id="fullscreenBtn"><i class="ri-fullscreen-line"></i> Fullscreen</button>
     </div>
 
-    <!-- Current URL readout -->
-    <input type="text" id="currentUrl" readonly placeholder="No Signal" />
+
 
     <!-- Proxy iframe area -->
     <div id="proxyContainer">

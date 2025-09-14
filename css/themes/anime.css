@@ -1,5 +1,5 @@
 /* anime.css - soft pastels, rounded */
-body.theme-anime { background:linear-gradient(180deg,#fff0f8,#f0f8ff); color:#222; font-family:'Noto Sans JP',sans-serif; }
-body.theme-anime .title { color:#ff69b4; text-shadow:0 0 8px #ffb6c1; }
-body.theme-anime .dropbtn { background:#fff; color:#ff69b4; border:2px solid #ff9ad5; border-radius:18px; }
-body.theme-anime .dropdown-content { background:#fff; color:#ff69b4; border:2px solid #ff9ad5; border-radius:12px; }
+body.theme-anime { background:linear-gradient(180deg,#f7e6f7,#e6f0ff); color:#444; font-family:'Noto Sans JP',sans-serif; }
+body.theme-anime .title { color:#b97bbd; text-shadow:0 0 8px #e6b7e6; }
+body.theme-anime .dropbtn { background:#f7e6f7; color:#b97bbd; border:2px solid #e6b7e6; border-radius:18px; }
+body.theme-anime .dropdown-content { background:#f7e6f7; color:#b97bbd; border:2px solid #e6b7e6; border-radius:12px; }

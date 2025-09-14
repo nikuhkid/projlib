@@ -5,8 +5,13 @@
     const img = document.createElement('img');
     img.src = assets[Math.floor(Math.random()*assets.length)];
     img.className = 'comic-sprite';
-    img.style.left = (e.pageX - 50) + 'px';
-    img.style.top = (e.pageY - 50) + 'px';
+    img.style.position = 'fixed';
+    img.style.left = (e.clientX - 50) + 'px';
+    img.style.top = (e.clientY - 50) + 'px';
+    img.style.width = '100px';
+    img.style.height = '100px';
+    img.style.zIndex = 9999;
+    img.style.pointerEvents = 'none';
     document.body.appendChild(img);
     setTimeout(()=> { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 400); }, 650);
   }

@@ -24,15 +24,23 @@ body {
 /* HEADER */
 .header {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.header .title {
+  text-align: center;
+  margin: 0 0 8px 0;
+}
+.header-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.header .title {
-  flex-grow: 1;
-  text-align: center;
-  margin: 0;
+.header-left {
+  display: flex;
+  align-items: center;
 }
-.controls {
+.header-right {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -131,16 +139,7 @@ body {
   background: #444;
 }
 
-/* URL readout */
-#currentUrl {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 6px;
-  border: 1px solid #333;
-  background: #000;
-  color: #0f0;
-  font-family: monospace;
-}
+
 
 /* PROXY CONTAINER */
 #proxyContainer {

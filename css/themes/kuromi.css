@@ -1,5 +1,5 @@
 /* kuromi.css - pink gradient and cute vibe */
-body.theme-kuromi { background:linear-gradient(135deg,#2b002b,#1a003a); color:#ffd6f2; font-family:'Comic Sans MS',cursive; }
-body.theme-kuromi .title { color:#ff9ad5; text-shadow:0 0 8px #ff9ad5; }
-body.theme-kuromi .dropbtn { background:linear-gradient(90deg,#330033,#8c2f72); color:#fff; border:1px solid #ff66cc; border-radius:12px; }
-body.theme-kuromi .dropdown-content { background:#2b002b; color:#ffd6f2; border:1px solid #ff66cc; }
+body.theme-kuromi { background:linear-gradient(135deg,#2b002b,#1a003a 80%); color:#e6b7e6; font-family:'Comic Sans MS',cursive; }
+body.theme-kuromi .title { color:#e6b7e6; text-shadow:0 0 8px #b97bbd; }
+body.theme-kuromi .dropbtn { background:linear-gradient(90deg,#330033,#6c3a5c); color:#e6b7e6; border:1px solid #b97bbd; border-radius:12px; }
+body.theme-kuromi .dropdown-content { background:#2b002b; color:#e6b7e6; border:1px solid #b97bbd; }

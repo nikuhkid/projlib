@@ -3,17 +3,24 @@
   const container = document.querySelector('.console-container') || document.body;
   let interval = null;
 
+  // Katakana Unicode range: 0x30A0 - 0x30FF
+  const katakana = [];
+  for (let i = 0x30A0; i <= 0x30FF; ++i) katakana.push(String.fromCharCode(i));
+
   function spawnChar(){
     const r = container.getBoundingClientRect();
     const c = document.createElement('div');
     c.className = 'theme-effect matrix-char';
     c.style.position = 'absolute';
-    c.style.left = Math.floor(Math.random()*(r.width-18)) + 'px';
+    // Center horizontally: spawn only in the center 60% of the container
+    const minX = r.width * 0.2;
+    const maxX = r.width * 0.8 - 18;
+    c.style.left = Math.floor(minX + Math.random() * (maxX - minX)) + 'px';
     c.style.top = '-20px';
     c.style.fontFamily = 'monospace';
     c.style.color = '#0f0';
-    c.style.fontSize = '14px';
-    c.textContent = String.fromCharCode(33 + Math.floor(Math.random()*90));
+    c.style.fontSize = '18px';
+    c.textContent = katakana[Math.floor(Math.random()*katakana.length)];
     container.appendChild(c);
     let top = -20;
     const move = setInterval(()=> {
