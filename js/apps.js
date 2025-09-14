@@ -20,10 +20,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let config = null;
 
-  // Load JSON config from hubData.json
+  // Load JSON config using ProjLib.loadHubData
   try {
-    const res = await fetch("hubData.json");
-    config = await res.json();
+    config = await window.ProjLib.loadHubData("hubData.json");
     populateDropdowns(config.categories);
     loadHome(config.defaultHome);
   } catch (err) {
@@ -36,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const select = document.getElementById(cat.id);
       if (select) {
         const placeholder = document.createElement("option");
-        placeholder.textContent = `-- ${cat.label} --`;
+        placeholder.textContent = `-- ${window.ProjLib.sanitizeText(cat.label)} --`;
         placeholder.disabled = true;
         placeholder.selected = true;
         select.appendChild(placeholder);
@@ -44,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         cat.links.forEach(link => {
           const option = document.createElement("option");
           option.value = link.url;
-          option.textContent = link.name;
+          option.textContent = window.ProjLib.sanitizeText(link.name);
           select.appendChild(option);
         });
 
@@ -63,12 +62,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load URL into iframe
   function loadUrl(url) {
     if (!url) return;
+    // Validate URL using ProjLib.isValidUrl
+    let validUrl = url;
+    if (!window.ProjLib.isValidUrl(url)) {
+      validUrl = 'https://swisscows.com/web?query=' + encodeURIComponent(url);
+    }
     initialMessage.style.display = "none";
     loadingOverlay.style.display = "flex";
 
     setTimeout(() => {
-      proxyFrame.src = url;
-      currentUrl.value = url;
+      proxyFrame.src = validUrl;
+      currentUrl.value = validUrl;
       loadingOverlay.style.display = "none";
     }, 1000);
   }
