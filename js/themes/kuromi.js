@@ -26,7 +26,7 @@
     img.style.top = y + 'px';
     img.style.width = '100px';
     img.style.height = '100px';
-  img.style.zIndex = -1; // always below everything
+  img.style.zIndex = 10; // above background, below overlays/UI
     img.style.pointerEvents = 'none';
     img.style.opacity = '1';
   // Random rotation between -45 and 45 degrees
