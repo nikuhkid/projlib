@@ -5,14 +5,13 @@
   const INTERVAL_MS = 1800; // more frequent
   let id = null;
 
-  // Helper to get a random position within the iframe area
+  // Helper to get a random position: x matches iframe width, y anywhere on screen
   function getRandomPosition() {
     const iframe = document.getElementById('proxyFrame');
-    const r = iframe ? iframe.getBoundingClientRect() : document.body.getBoundingClientRect();
-    // Pop anywhere within the iframe area, with a margin
+    const r = iframe ? iframe.getBoundingClientRect() : {left: 0, width: window.innerWidth};
     const margin = 10;
     const x = r.left + margin + Math.random() * (r.width - 100 - 2 * margin);
-    const y = r.top + margin + Math.random() * (r.height - 100 - 2 * margin);
+    const y = Math.random() * (window.innerHeight - 100);
     return {x, y};
   }
 
@@ -26,7 +25,7 @@
     img.style.top = y + 'px';
     img.style.width = '100px';
     img.style.height = '100px';
-  img.style.zIndex = 10; // above background, below overlays/UI
+  img.style.zIndex = 999; // just below UI overlays, above everything else
     img.style.pointerEvents = 'none';
     img.style.opacity = '1';
   // Random rotation between -45 and 45 degrees
