@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!input) return;
     let validUrl = input.trim();
     // List of common TLDs
-    const tlds = ['.com','.net','.org','.io','.ai','.co','.dev','.app','.info','.xyz','.gov','.edu','.me','.us','.uk','.ca','.jp','.de','.fr','.es','.it','.nl','.ru','.br','.au'];
+    const tlds = ['.com','.net','.org','.io','.ai','.co','.dev','.app','.info','.xyz','.gov','.edu','.me','.us','.uk','.ca','.jp','.de','.fr','.es','.it','.nl','.ru','.br','.au','.su','.se','.garden','.news','.onl','.to','.cc','.li','.show','.vip','.wiki','.bar','.app','.ooo','.wtf','.fun'];
     const isLikelyUrl = tlds.some(tld => validUrl.endsWith(tld) || validUrl.includes(tld + '/'));
     if (isLikelyUrl && !/^https?:\/\//.test(validUrl)) {
       validUrl = 'https://' + validUrl;
