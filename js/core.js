@@ -1,39 +1,53 @@
-// core.js - utility functions and hub loader
-(function (ProjLib) {
-  'use strict';
+// =======================
+// core.js  – foundation
+// =======================
+(function () {
+  const ProjLib = (window.ProjLib = window.ProjLib || {});
 
-  ProjLib.isValidUrl = function (s) {
-    try {
-      const u = new URL(s.startsWith('http') ? s : 'https://' + s);
-      return !!u.hostname && (u.hostname.includes('.') || u.hostname === 'localhost');
-    } catch { return false; }
+  // --- basic utilities ---
+  const utils = {
+    async fetchWithRetry(url, attempts = 3, delay = 1000) {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(res.statusText);
+          return await res.json();
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+    },
+    el(tag, attrs = {}, ...children) {
+      const el = document.createElement(tag);
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (k in el) el[k] = v;
+        else el.setAttribute(k, v);
+      });
+      for (const child of children) {
+        if (typeof child === "string") el.appendChild(document.createTextNode(child));
+        else if (child) el.appendChild(child);
+      }
+      return el;
+    },
+    clear(el) {
+      while (el.firstChild) el.removeChild(el.firstChild);
+    },
+    log(...a) {
+      console.log("[ProjLib]", ...a);
+    }
   };
 
-  ProjLib.sanitizeText = function (txt) {
-    const d = document.createElement('div');
-    d.textContent = txt;
-    return d.innerHTML;
+  // --- data layer ---
+  const data = {
+    hub: null,
+    async loadHubData(path = "hubData.json") {
+      ProjLib.utils.log("Loading hub data:", path);
+      data.hub = await utils.fetchWithRetry(path);
+      return data.hub;
+    }
   };
 
-  ProjLib.fetchWithTimeout = function (url, opts = {}, timeoutMs = 15000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    return fetch(url, {...opts, signal: controller.signal})
-      .then(resp => { clearTimeout(timer); return resp; })
-      .catch(err => { clearTimeout(timer); throw err; });
-  };
-
-  ProjLib.fetchWithRetry = function (url, opts={}, retries=2, timeoutMs=15000) {
-    return ProjLib.fetchWithTimeout(url, opts, timeoutMs).catch(err => {
-      if (retries > 0) return ProjLib.fetchWithRetry(url, opts, retries - 1, timeoutMs);
-      throw err;
-    });
-  };
-
-  ProjLib.loadHubData = function (path='./hubData.json') {
-    return ProjLib.fetchWithRetry(path, {}, 2, 10000)
-      .then(resp => { if(!resp.ok) throw new Error('bad hub fetch'); return resp.json(); })
-      .catch(() => ({ categories: [] }));
-  };
-
-})(window.ProjLib = window.ProjLib || {});
+  ProjLib.utils = utils;
+  ProjLib.data = data;
+})();
