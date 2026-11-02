@@ -39,6 +39,8 @@ try {
     page.locator('#refreshBtn').click()
   ]);
   await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
+  await expect(page.locator('#loadingOverlay')).toBeHidden({ timeout: 30000 });
+  await expect(page.locator('#statusMessage')).toHaveAttribute('data-error', 'false', { timeout: 10000 });
   assert.deepEqual(errors, []);
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
