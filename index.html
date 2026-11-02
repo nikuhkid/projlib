@@ -79,6 +79,20 @@
       </div>
       <div id="loadingOverlay" class="loadingOverlay" hidden><div class="spinner" role="status" aria-label="Opening site"></div></div>
       <iframe id="proxyFrame" title="Website viewer" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" referrerpolicy="no-referrer" allow="fullscreen" hidden></iframe>
+      <div id="browserView" class="browser-view" hidden>
+        <div class="browser-tools" aria-label="Private browser controls">
+          <button type="button" data-browser-action="back" aria-label="Back">←</button>
+          <button type="button" data-browser-action="forward" aria-label="Forward">→</button>
+          <div id="browserTabs" class="browser-tabs" aria-label="Browser tabs"></div>
+          <button type="button" data-browser-action="newTab" aria-label="New tab">+</button>
+          <button type="button" data-browser-action="keyboard">Keyboard</button>
+          <button type="button" data-browser-action="end">End session</button>
+        </div>
+        <div id="browserStage" class="browser-stage">
+          <canvas id="browserCanvas" width="1280" height="800" tabindex="0" aria-label="Remote website. Click to interact; use Keyboard for text on phones."></canvas>
+          <textarea id="browserKeyboard" class="browser-keyboard" aria-label="Type into the remote website" autocomplete="off" autocapitalize="none" spellcheck="false" data-lpignore="true"></textarea>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -86,6 +100,7 @@
   <noscript><p>ProjLib needs JavaScript to load its directory and website viewer.</p></noscript>
   <script src="js/core.js" defer></script>
   <script src="js/ui.js" defer></script>
+  <script src="js/browser-session.js" defer></script>
   <script src="js/apps.js" defer></script>
 </body>
 </html>

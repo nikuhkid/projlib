@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const hub = JSON.parse(await readFile('hubData.json', 'utf8'));
 test.beforeEach(async ({ page }) => {
-  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, defaultHome: 'https://example.com/', proxyBase: 'https://proxy.example.net' } }));
+  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: false, defaultHome: 'https://example.com/', proxyBase: 'https://proxy.example.net' } }));
   await page.route('https://proxy.example.net/**', route => route.fulfill({ contentType: 'text/html', body: '<html><head></head><body><h1>Proxy fixture</h1></body></html>' }));
   await page.route('https://example.com/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Direct fixture</h1>' }));
 });
@@ -75,7 +75,7 @@ test('configuration failures are visible and leave navigation disabled', async (
 });
 
 test('without a deployed proxy the console stays in Direct Mode and explains the unavailable switch', async ({ page }) => {
-  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, proxyBase: '' } }));
+  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: false, proxyBase: '' } }));
   await page.goto('/projlib/');
   await expect(page.locator('#homeBtn')).toBeEnabled();
   await expect(page.locator('#proxyFrame')).toBeHidden();

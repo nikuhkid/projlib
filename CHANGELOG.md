@@ -2,6 +2,9 @@
 
 ## 2026-11-02
 
+- Added isolated, sandboxed Chromium sessions on Wolfie, streamed through an authenticated outbound Cloudflare Durable Object relay. No public desktop or DevTools port is exposed.
+- Added per-visitor cookies/storage, tab controls, keyboard/paste/touch input, session reconnection, idle cleanup, resource limits, and DNS-pinned public-network egress.
+- Verified login persistence, visitor isolation, session cleanup, and the complete interface/relay/browser path with a fake account fixture. Facebook and Instagram sign-in forms render; ChatGPT requires human verification. Real account sign-ins remain unverified.
 - Removed Wix identity helpers, email allowlists, authorization checks, and masked link views.
 - Reconnected the original console: six category dropdowns, URL input, Proxy Mode, Home, Refresh, Fullscreen, and eight themes.
 - Fixed the invalid pasted patch instruction in the main theme script, cross-origin refresh errors, theme cleanup leaks, and the inaccessible proxy checkbox.

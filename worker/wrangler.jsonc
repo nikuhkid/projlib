@@ -5,6 +5,8 @@
   "compatibility_date": "2026-11-02",
   "workers_dev": true,
   "preview_urls": false,
+  "durable_objects": { "bindings": [{ "name": "BROWSER_RELAY", "class_name": "BrowserRelay" }] },
+  "migrations": [{ "tag": "browser-relay-v1", "new_sqlite_classes": ["BrowserRelay"] }],
   "vars": {
     "FRONTEND_ORIGIN": "https://nikuhkid.github.io"
   },

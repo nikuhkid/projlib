@@ -32,13 +32,25 @@ try {
   }
   await page.locator('#urlInput').fill('https://example.com/');
   await page.getByRole('button', { name: 'Engage' }).click();
-  const frameBody = page.frameLocator('#proxyFrame').locator('body');
-  await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
-  await Promise.all([
-    page.waitForEvent('framenavigated', frame => frame.parentFrame() !== null && frame.url().includes('example.com')),
-    page.locator('#refreshBtn').click()
-  ]);
-  await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
+  if (config.browserSessions) {
+    const health = await page.request.get(`${config.proxyBase}/browser/health`);
+    assert.equal((await health.json()).online, true);
+    await expect(page.locator('#browserTabs')).toContainText('Example Domain', { timeout: 45000 });
+    await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
+    await page.locator('#refreshBtn').click();
+    await expect(page.locator('#browserTabs')).toContainText('Example Domain');
+    await page.reload();
+    await expect(page.locator('#browserTabs')).toContainText('Example Domain', { timeout: 30000 });
+    await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
+  } else {
+    const frameBody = page.frameLocator('#proxyFrame').locator('body');
+    await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
+    await Promise.all([
+      page.waitForEvent('framenavigated', frame => frame.parentFrame() !== null && frame.url().includes('example.com')),
+      page.locator('#refreshBtn').click()
+    ]);
+    await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
+  }
   await expect(page.locator('#loadingOverlay')).toBeHidden({ timeout: 30000 });
   await expect(page.locator('#statusMessage')).toHaveAttribute('data-error', 'false', { timeout: 10000 });
   assert.deepEqual(errors, []);
@@ -46,8 +58,10 @@ try {
   await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 375, height: 812 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  if (config.browserSessions) await expect.poll(() => page.locator('#browserCanvas').evaluate(canvas => canvas.width)).toBeLessThanOrEqual(375);
   await page.screenshot({ path: 'test-results/live-mobile.png', fullPage: true });
-  console.log(JSON.stringify({ site, mode: hasProxy ? 'Proxy' : 'Direct', proxy: config.proxyBase || null, publicPage: response.status(), workerHealth, embeddedPage: 'example.com (rendered)', pageErrors: errors, screenshots: ['test-results/live-desktop.png', 'test-results/live-mobile.png'] }, null, 2));
+  if (config.browserSessions) await page.getByRole('button', { name: 'End session', exact: true }).click();
+  console.log(JSON.stringify({ site, mode: config.browserSessions ? 'Private browser' : hasProxy ? 'Proxy' : 'Direct', proxy: config.proxyBase || null, publicPage: response.status(), workerHealth, embeddedPage: 'example.com (rendered)', pageErrors: errors, screenshots: ['test-results/live-desktop.png', 'test-results/live-mobile.png'] }, null, 2));
 } catch (error) {
   await mkdir('test-results', { recursive: true });
   if (page) {
