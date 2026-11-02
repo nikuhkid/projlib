@@ -1,0 +1,12 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "projlib-proxy",
+  "main": "index.js",
+  "compatibility_date": "2026-11-02",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "FRONTEND_ORIGIN": "https://nikuhkid.github.io"
+  },
+  "observability": { "enabled": false }
+}

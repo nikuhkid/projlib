@@ -1,120 +1,137 @@
-// js/apps.js
-// Orchestrator: ties core + ui + data together
-// Full-file: drop-in replacement.
-
+// ProjLib Control Node [BETA]: connect the console to its public web proxy.
 (function () {
-  if (!window.ProjLib) window.ProjLib = {};
-  const ProjLib = window.ProjLib;
-  const utils = ProjLib.utils;
-  const data = ProjLib.data;
-  const UI = ProjLib.UI;
+  'use strict';
+  const { utils, data, UI } = window.ProjLib;
 
-  // fallback theme if none in hub
-  const FALLBACK_THEMES = [
-    { name: 'main', css: 'css/themes/main.css', js: 'js/themes/main.js' }
-  ];
+  async function init() {
+    const frame = document.getElementById('proxyFrame');
+    const form = document.getElementById('proxyForm');
+    const input = document.getElementById('urlInput');
+    const toggle = document.getElementById('proxyToggle');
+    const overlay = document.getElementById('loadingOverlay');
+    const original = document.getElementById('openOriginal');
+    const themeButton = document.getElementById('themeBtn');
+    let currentUrl = '';
+    let frameError = false;
+    let loadTimer;
+    let hub;
 
-  // Determine authorized emails set (from hub or global). Returned as Set.
-  function getAuthorizedEmails(hub) {
-    if (!hub) return new Set();
-    const fromHub = hub.authorizedEmails || hub.whitelistEmails || hub.authorized || [];
-    if (Array.isArray(fromHub)) return new Set(fromHub.map(s => String(s).toLowerCase()));
-    return new Set();
-  }
-
-  async function checkAuthorization(hub) {
-    const set = getAuthorizedEmails(hub);
-    if (!set.size) return { authorized: true, email: null }; // no list -> treat as open
-
-    // try async get email
-    let email = null;
-    try { email = await utils.getCurrentUserEmailAsync(); } catch (e) { email = null; }
-    if (!email) {
-      // try sync fallback
-      email = utils.getCurrentUserEmail ? utils.getCurrentUserEmail() : null;
+    function stopLoading() {
+      clearTimeout(loadTimer);
+      overlay.hidden = true;
+      frame.setAttribute('aria-busy', 'false');
     }
-    if (!email) return { authorized: false, email: null };
 
-    const allowed = set.has(email.toLowerCase());
-    return { authorized: allowed, email };
-  }
+    function showTarget(url) {
+      currentUrl = url;
+      input.value = url;
+      original.href = url;
+      original.hidden = false;
+    }
 
-  // Mask hub for limited users (simple approach: remove URLs)
-  function maskHubForLimited(hub) {
+    function loadUrl(value) {
+      try {
+        const target = utils.normalizeUrl(value);
+        let address = target;
+        if (toggle.checked) {
+          if (!hub.proxyBase) throw new Error('The proxy is not configured yet. Switch off Proxy Mode to open embeddable sites.');
+          const endpoint = new URL(hub.proxyBase);
+          if (endpoint.origin === location.origin) throw new Error('The proxy must use a separate origin from ProjLib.');
+          address = `${endpoint.origin}/proxy/${target}`;
+        } else if (location.protocol === 'https:' && target.startsWith('http:')) {
+          throw new Error('HTTP sites need Proxy Mode on this HTTPS page.');
+        }
+        stopLoading();
+        frameError = false;
+        showTarget(target);
+        document.getElementById('initialMessage').hidden = true;
+        frame.hidden = false;
+        frame.setAttribute('aria-busy', 'true');
+        overlay.hidden = false;
+        UI.status(`Opening ${new URL(target).hostname} in ${toggle.checked ? 'Proxy' : 'Direct'} Mode…`);
+        frame.src = address;
+        loadTimer = setTimeout(() => {
+          stopLoading();
+          UI.status('This site is taking a while. Try Refresh or Open original.', true);
+        }, 15000);
+      } catch (error) {
+        UI.status(error.message, true);
+      }
+    }
+
+    frame.addEventListener('load', () => {
+      if (!currentUrl) return;
+      stopLoading();
+      if (!frameError) UI.status('Frame opened. If the site is blank or refuses to connect, use Open original.');
+    });
+    frame.addEventListener('error', () => {
+      stopLoading();
+      UI.status('The site could not be opened. Try Open original.', true);
+    });
+    window.addEventListener('message', event => {
+      if (event.source !== frame.contentWindow || !toggle.checked) return;
+      if (event.data?.type === 'projlib:navigation') {
+        try { showTarget(utils.normalizeUrl(event.data.url)); } catch { /* invalid message */ }
+      } else if (event.data?.type === 'projlib:error') {
+        frameError = true;
+        stopLoading();
+        UI.status('The proxy could not retrieve this site. Try Open original.', true);
+      }
+    });
+    form.addEventListener('submit', event => { event.preventDefault(); loadUrl(input.value); });
+    document.getElementById('scannerBtn').addEventListener('click', event => {
+      form.hidden = !form.hidden;
+      event.currentTarget.setAttribute('aria-expanded', String(!form.hidden));
+      if (!form.hidden) input.focus();
+    });
+    document.getElementById('homeBtn').addEventListener('click', () => loadUrl(hub.defaultHome));
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      if (currentUrl) loadUrl(currentUrl);
+    });
+    document.getElementById('fullscreenBtn').addEventListener('click', async () => {
+      try {
+        const container = document.getElementById('proxyContainer');
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else if (container.requestFullscreen) await container.requestFullscreen();
+        else throw new Error('Fullscreen is unavailable in this browser.');
+      } catch (error) { UI.status(error.message, true); }
+    });
+
     try {
-      const copy = JSON.parse(JSON.stringify(hub));
-      if (Array.isArray(copy.categories)) {
-        copy.categories.forEach(cat => {
-          if (Array.isArray(cat.links)) {
-            cat.links.forEach(l => {
-              // remove link target
-              l.url = '#';
-            });
-          }
+      hub = await data.loadHubData();
+      UI.renderHub(hub);
+      const preference = utils.storage.get('projlib_proxy_mode');
+      toggle.checked = Boolean(hub.proxyBase) && preference !== 'direct';
+      toggle.addEventListener('change', () => {
+        utils.storage.set('projlib_proxy_mode', toggle.checked ? 'proxy' : 'direct');
+        if (currentUrl) loadUrl(currentUrl);
+      });
+      document.querySelectorAll('.dropdowns-grid select').forEach(select => {
+        select.addEventListener('change', () => {
+          if (select.value) loadUrl(select.value);
+          select.value = '';
         });
+      });
+      const saved = utils.storage.get('projlib_theme_name') || utils.storage.get('projlib_theme');
+      let themeIndex = Math.max(0, hub.themes.findIndex(theme => theme.name === saved));
+      async function setTheme() {
+        themeButton.disabled = true;
+        try { await UI.applyTheme(hub.themes[themeIndex]); }
+        catch (error) { UI.status(error.message, true); }
+        finally { themeButton.disabled = false; }
       }
-      copy.dynamic = copy.dynamic || 'Limited access — login required for full links.';
-      return copy;
-    } catch (e) {
-      return hub;
+      themeButton.addEventListener('click', async () => {
+        themeIndex = (themeIndex + 1) % hub.themes.length;
+        await setTheme();
+      });
+      await setTheme();
+      document.querySelectorAll('[data-needs-config]').forEach(control => { control.disabled = false; });
+      loadUrl(hub.defaultHome);
+    } catch (error) {
+      stopLoading();
+      UI.status(`${error.message} Reload the page to try again.`, true);
     }
   }
 
-  async function init(opts = {}) {
-    try {
-      UI.init(opts.ui || {});
-      const hub = await data.loadHubData(opts.hubPath || 'hubData.json');
-
-      // Authorization gating (if hub lists authorized emails)
-      const auth = await checkAuthorization(hub);
-      if (!auth.authorized) {
-        utils.log('User not authorized — applying limited view', auth.email);
-        const limited = maskHubForLimited(hub);
-        // do not overwrite original hub on disk; keep working copy
-        ProjLib.data.hub = limited;
-      } else {
-        ProjLib.data.hub = hub;
-      }
-
-      // Render
-      UI.renderHub(ProjLib.data.hub);
-
-      // Apply initial theme: prefer saved name -> hub.themes[0] -> fallback
-      const savedThemeName = localStorage.getItem('projlib_theme_name');
-      let theme = null;
-      if (savedThemeName) theme = UI.findTheme(savedThemeName);
-      if (!theme) theme = (hub && hub.themes && hub.themes.length) ? hub.themes[0] : null;
-      if (!theme) theme = FALLBACK_THEMES[0];
-
-      UI.applyTheme(theme);
-
-      // Wire up theme button if present
-      const themeBtn = document.getElementById('themeBtn');
-      if (themeBtn && hub && hub.themes && hub.themes.length) {
-        let idx = (hub.themes.findIndex(t => t.name === (theme && theme.name)) || 0);
-        themeBtn.addEventListener('click', () => {
-          idx = (idx + 1) % hub.themes.length;
-          const next = hub.themes[idx];
-          if (next) {
-            UI.applyTheme(next);
-            localStorage.setItem('projlib_theme_name', next.name || '');
-          }
-        });
-      }
-
-      utils.log('ProjLib initialized');
-    } catch (err) {
-      console.error('[ProjLib] init error', err);
-    }
-  }
-
-  // auto-init when DOM ready
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    init();
-  } else {
-    document.addEventListener('DOMContentLoaded', () => init());
-  }
-
-  ProjLib.App = { init };
-
+  document.addEventListener('DOMContentLoaded', init, { once: true });
 })();

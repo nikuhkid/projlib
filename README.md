@@ -1,191 +1,98 @@
-# ProjLib
+# ProjLib Control Node [BETA]
 
+ProjLib is a public, themed website directory and web-proxy console. Pick a site from one of six categories or enter an HTTP(S) address. The selected page opens inside the console. The original project name, directory, eight themes, and artwork are preserved.
 
-ProjLib is a modular, themed browser-like web interface for quickly launching and viewing curated sites in a sandboxed iframe — complete with dropdown menus, a modular theming engine, and playful animated themes.
+- **Proxy Mode:** a separate Cloudflare Worker retrieves pages and rewrites ordinary links, images, stylesheets, forms, redirects, and browser fetch/XHR requests through the proxy.
+- **Direct Mode:** opens the destination directly in the iframe. Sites that forbid embedding will refuse to appear.
+- **Controls:** address bar (Scanner), Home, Refresh, Fullscreen, theme cycling, and Open original.
+- **Public access:** no Wix SDK, visitor account, email allowlist, login screen, or restricted view. Optional browser preferences store only the selected theme and mode.
 
----
+The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projlib/>. The proxy runs separately on **Cloudflare Workers**: Pages serves static files and cannot run a proxy backend.
 
+## What this proxy supports
 
-## 🚀 Features
+The Worker handles public HTTP(S) destinations on standard ports. It rewrites HTML attributes, `srcset`, CSS URLs/imports, redirects, GET/POST forms, JavaScript fetch/XHR, and ordinary dynamically inserted links. It streams binary resources and forwards range requests.
 
-- **Customizable Home Page**  
-  Loads a default home (configurable in `hubData.json`).
+This is a stateless web proxy, not a VPN or a complete browser emulator. Cookies and authorization headers are not forwarded, and proxied documents are sandboxed without shared storage. Destination sign-ins, anti-bot challenges, DRM/video players, WebSockets, service workers, JavaScript module imports, and applications tied to their original origin may not work. Some bookmarked domains may also have expired since the original directory was written. **Open original** is always available. Browsing is not anonymous to the destination or hosting providers.
 
-- **Category Dropdowns**  
-  Six categories (Brain Tease, Arcade, Animation, Readable, Watchable, Dailies) populated from `hubData.json`.
+## Local development
 
-- **Modular Theming Engine**  
-  8 distinct animated visual themes:
-  `main` (futuristic darkweb console), `kuromi`, `comic`, `matrix`, `glitch`, `anime`, `cyberpunk`, `minimal`.
+Requires Node.js 22 or newer and npm. From the repository root:
 
-- **Proxy Mode**  
-  Toggle to load all sites through a proxy (`https://proxy.liyao.space/------`).
-
-- **Animated Theme Effects**  
-  Each theme can have its own JS/CSS for overlays, particles, scanlines, glitch, and more.
-
-- **Interactive Controls**  
-  Home, Refresh, Theme Toggle, Fullscreen, and URL search form.
-
-- **Notifications & Loading Overlay**  
-  User alerts and loading spinner while iframe content loads.
-
-- **Responsive Design**  
-  Mobile‑friendly layout and controls.
-
----
-
-
-## 📂 Project Structure
-
-```
-projlib/
-├── index.html            # Main app shell
-├── css/
-│   ├── style.css         # Base styles
-│   └── themes/
-│       ├── main.css      # Main (darkweb) theme
-│       ├── kuromi.css    # Kuromi theme
-│       ├── comic.css     # Comic theme
-│       ├── matrix.css    # Matrix theme
-│       ├── glitch.css    # Glitch theme
-│       ├── anime.css     # Anime theme
-│       ├── cyberpunk.css # Cyberpunk theme
-│       └── minimal.css   # Minimal theme
-├── js/
-│   ├── apps.js           # Main app logic and theme loader
-│   └── themes/
-│       ├── main.js       # Main theme effects
-│       ├── kuromi.js     # Kuromi theme effects
-│       ├── comic.js      # Comic theme effects
-│       ├── matrix.js     # Matrix theme effects
-│       ├── glitch.js     # Glitch theme effects
-│       ├── anime.js      # Anime theme effects
-│       ├── cyberpunk.js  # Cyberpunk theme effects
-│       └── minimal.js    # Minimal theme effects
-├── hubData.json          # Configurable categories & links
-├── assets/               # Theme images/icons (kuromi.png, pow.png, splash.png, zap.png)
-└── LICENSE
+```sh
+npm ci
+npm run dev
 ```
 
----
+Open <http://127.0.0.1:4173/projlib/>. All asset paths are relative so the project works under the GitHub Pages `/projlib/` path.
 
+The Worker can run separately:
 
-## ⚙️ Configuration
+```sh
+npm run worker:dev
+```
 
-- **Default Home Page**  
-  Set in `hubData.json` → `defaultHome`.
+For local proxy testing, set `proxyBase` in `hubData.json` to the origin Wrangler prints, and pass `--var FRONTEND_ORIGIN:http://127.0.0.1:4173` to `worker:dev`. Restore the production endpoint before publishing.
 
-- **Categories & Links**  
-  Managed in `hubData.json` → `categories` array.
+## Configuration
 
----
+`hubData.json` contains:
 
-npx serve .
+- `defaultHome`: the website Home opens.
+- `proxyBase`: the deployed Worker origin, without a `/proxy/` suffix. Proxy Mode is enabled by default when this is set. An empty value leaves Direct Mode available.
+- `categories`: the six dropdowns and their site names/URLs. The existing bookmarks are retained.
+- `themes`: the eight CSS/JavaScript theme pairs.
 
-## 🛠 How to Run
+Theme and mode preferences are optional: startup still works if the browser blocks local storage. Theme animations respect reduced-motion preferences and clean up when switched.
 
-1. Clone the repository:
-  ```bash
-  git clone https://github.com/<your-username>/<your-repo>.git
-  cd <your-repo>
-  ```
-2. Serve with any static web server (to allow local JSON fetches). For example:
-  ```bash
-  npx serve .
-  ```
-  or use VS Code Live Server, http-server, etc.
-3. Open http://localhost:PORT in your browser.
+## Deployment
 
-Here’s a future‑proof, practical README.md draft for your GitHub repo that documents exactly what exists today, leaves room for minor changes, and avoids locking you into brittle specifics.
-You can copy‑paste this into a README.md file in your repo root.
+### Cloudflare Worker
 
-# ProjLib Beta
+```sh
+npx wrangler login
+npm run worker:deploy
+```
 
-ProjLib Beta is a themed, browser‑like web interface that lets you quickly launch and view curated sites in a sandboxed iframe — complete with dropdown menus, tab masking, a live news ticker, and playful animated themes.
+`worker/wrangler.jsonc` configures the `projlib-proxy` Worker on `workers.dev`, with the GitHub Pages origin allowed to embed it. There is no Cloudflare Access gate or visitor authentication. Put the printed Worker origin in `hubData.json` → `proxyBase`. Cloudflare credentials stay in Wrangler's local authentication store; never put them in the frontend or repository.
 
----
+### GitHub Pages
 
-## 🚀 Features
+The `.github/workflows/pages.yml` workflow runs Worker tests, builds an explicit allowlist of browser assets into `dist/`, and publishes it using GitHub's Pages Actions. Tooling, tests, and Worker source are excluded from the published artifact. Configure **Settings → Pages → Source → GitHub Actions**, then push to `main`. Only the Pages website needs to be public; the repository can remain private when the account plan supports it.
 
-- **Customizable Home Page**  
-  Loads a default home (`archive.org` by default — configurable in `hubData.json`).
+## Verification
 
-- **Category Dropdowns**  
-  Six categories (Brain Tease, Arcade, Animation, Readable, Watchable, Dailies) populated from `hubData.json`.
+```sh
+npm test
+npx playwright install chromium --only-shell
+npm run test:browser
+npm run build
+```
 
-- **Tab Masking**  
-  Change the tab’s title and favicon on the fly from a predefined list.
+The Worker tests execute Cloudflare's actual HTMLRewriter in Miniflare with deterministic upstream responses. Browser checks cover anonymous startup, all categories/themes, address validation, mode switching, cross-origin refresh, blocked local storage, configuration failures, mobile width, and the complete interface → Worker → destination path. These tests do not claim compatibility with every bookmarked third-party site.
 
-- **Theming Engine**  
-  8 distinct animated visual themes:
-  `dark`, `geek`, `minimal`, `kuromi`, `tech`, `comic`, `anime`, `cyberpunk`.
+## Repository structure
 
-- **RSS News Ticker**  
-  Scrolls the latest headlines (currently from RTP Mundo RSS feed).
+```text
+index.html            Console markup
+hubData.json          Directory, themes, and proxy endpoint
+css/style.css         Console layout and controls
+css/themes/           Theme styles
+js/core.js            Configuration, URL, and preference helpers
+js/ui.js              Dropdowns, theme loading, and status messages
+js/apps.js            Navigation and control handlers
+js/themes/            Theme effects and cleanup hooks
+assets/               Original theme artwork
+worker/               Cloudflare proxy and Wrangler configuration
+scripts/              Static server and Pages asset build
+tests/                Worker and browser tests
+.github/workflows/    GitHub Pages deployment
+```
 
-- **Interactive Controls**  
-  Home, Refresh, Theme Toggle, Fullscreen, and URL search form.
+Older `css/base.css`, `css/components.css`, `css/themes.css`, and dark-theme files remain in the repository for reference; the current console does not load them.
 
-- **Notifications & Loading Overlay**  
-  User alerts and loading spinner while iframe content loads.
+## License and credits
 
-- **Responsive Design**  
-  Mobile‑friendly layout and controls.
+All Rights Reserved; see [LICENSE](LICENSE). The existing license is unchanged.
 
----
-
-## 📂 Project Structure
-
-
-/ (root) ├── index.html          # Main app shell ├── css/ │   └── styles.css      # All themes & responsive styles ├── js/ │   └── app.js          # Core logic and boot sequence ├── hubData.json        # Configurable categories & links └── assets/             # Theme images/icons
-
----
-
-## ⚙️ Configuration
-
-- **Default Home Page**  
-  Set in `hubData.json` → `defaultHome`.
-
-- **Categories & Links**  
-  Managed in `hubData.json` → `categories` array.
-
-- **Blacklisted Domains**  
-  Listed in `hubData.json` → `blacklistedDomains`.
-
----
-
-## 🛠 How to Run
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/<your-username>/<your-repo>.git
-   cd <your-repo>
-
-
-2. Serve with any static web server (to allow local JSON fetches). For example:
-npx serve .
-2. or open in a local dev server (VS Code Live Server, http‑server, etc.).
-3. Open http://localhost:PORT in your browser.
-
-
----
-
-## 🧩 Modularity & Customization
-
-- **Adding Links:**
-  Just edit `hubData.json` — no JS changes needed.
-- **Adding a Theme:**
-  Add it to the `themes` array in `apps.js` and create the corresponding CSS/JS files.
-- **Theme Effects:**
-  Each theme can have its own JS for overlays, particles, scanlines, etc.
-
-
-## 📜 License
-
-All Rights Reserved. See LICENSE for details.
-
-
-## 🙌 Credits
-- Fonts: Orbitron
-- Icons: Remix Icon
+Original interface assets and themes are retained. Fonts: Orbitron (Google Fonts). Icons: Remix Icon. The proxy uses Cloudflare Workers' HTMLRewriter; no external public proxy is required.

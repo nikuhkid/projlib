@@ -21,7 +21,7 @@
       bar.style.pointerEvents = 'none';
       document.body.appendChild(bar);
       glitchEls.push(bar);
-      setTimeout(()=>{ bar.remove(); }, 180+Math.random()*200);
+      setTimeout(()=>{ bar.remove(); glitchEls = glitchEls.filter(item => item !== bar); }, 180+Math.random()*200);
     }
     // Randomly shift the title for a frame
     const title = document.querySelector('.title');

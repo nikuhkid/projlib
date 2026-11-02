@@ -10,6 +10,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ProjLib: a themed website directory and public web-proxy console." />
   <title>ProjLib Control Node [BETA]</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
@@ -25,22 +26,23 @@
       <div class="header-row">
         <div class="header-left">
           <label class="switch">
-            <input type="checkbox" id="proxyToggle" />
+            <input type="checkbox" id="proxyToggle" data-needs-config disabled />
             <span class="slider"></span>
             <span class="label">Proxy Mode</span>
           </label>
         </div>
         <div class="header-right">
-          <button id="scannerBtn"><i class="ri-search-eye-line"></i> Scanner</button>
-          <button id="themeBtn"><i class="ri-paint-brush-line"></i> Theme</button>
+          <button id="scannerBtn" type="button" aria-controls="proxyForm" aria-expanded="true"><i class="ri-search-eye-line" aria-hidden="true"></i> Scanner</button>
+          <button id="themeBtn" type="button" disabled><i class="ri-paint-brush-line" aria-hidden="true"></i> Theme</button>
         </div>
       </div>
     </header>
 
-    <!-- Scanner/search bar (hidden by default) -->
-    <form id="proxyForm" class="scanner hidden">
-      <input type="text" id="urlInput" placeholder="Enter URL or code sequence" />
-      <button type="submit">Engage</button>
+    <!-- Address bar -->
+    <form id="proxyForm" class="scanner">
+      <label class="sr-only" for="urlInput">Website address</label>
+      <input type="text" id="urlInput" placeholder="Enter a website address, e.g. example.com" autocomplete="url" autocapitalize="none" spellcheck="false" required />
+      <button type="submit" data-needs-config disabled>Engage</button>
     </form>
 
     <!-- Dropdown selectors -->
@@ -55,12 +57,16 @@
 
     <!-- Action buttons -->
     <div class="action-buttons">
-      <button id="homeBtn"><i class="ri-home-2-line"></i> Home</button>
-      <button id="refreshBtn"><i class="ri-restart-line"></i> Refresh</button>
-      <button id="fullscreenBtn"><i class="ri-fullscreen-line"></i> Fullscreen</button>
+      <button id="homeBtn" type="button" data-needs-config disabled><i class="ri-home-2-line" aria-hidden="true"></i> Home</button>
+      <button id="refreshBtn" type="button" data-needs-config disabled><i class="ri-restart-line" aria-hidden="true"></i> Refresh</button>
+      <button id="fullscreenBtn" type="button"><i class="ri-fullscreen-line" aria-hidden="true"></i> Fullscreen</button>
+      <a id="openOriginal" target="_blank" rel="noopener noreferrer" hidden>Open original ↗</a>
     </div>
 
 
+
+    <p id="statusMessage" role="status" aria-live="polite">Loading the site directory…</p>
+    <p class="connection-note">Proxy Mode routes pages through the ProjLib proxy. Some sites, sign-ins, and video players may require Open original.</p>
 
     <!-- Proxy iframe area -->
     <div id="proxyContainer">
@@ -71,14 +77,15 @@
           <p>Awaiting input sequence.</p>
         </div>
       </div>
-      <div id="loadingOverlay" class="loadingOverlay"><div class="spinner"></div></div>
-      <iframe id="proxyFrame" src=""></iframe>
+      <div id="loadingOverlay" class="loadingOverlay" hidden><div class="spinner" role="status" aria-label="Opening site"></div></div>
+      <iframe id="proxyFrame" title="Website viewer" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" referrerpolicy="no-referrer" allow="fullscreen" hidden></iframe>
     </div>
 
   </div>
 
-  <script src="js/core.js"></script>
-   <script src="js/ui.js"></script>
-  <script src="js/apps.js"></script>
+  <noscript><p>ProjLib needs JavaScript to load its directory and website viewer.</p></noscript>
+  <script src="js/core.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/apps.js" defer></script>
 </body>
 </html>

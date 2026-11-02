@@ -1,8 +1,15 @@
 {
   "defaultHome": "https://archive.org",
-  "whitelist": [
-    "wix.com",
-    "youtube.com"
+  "proxyBase": "",
+  "themes": [
+    { "name": "main", "css": "css/themes/main.css", "js": "js/themes/main.js" },
+    { "name": "kuromi", "css": "css/themes/kuromi.css", "js": "js/themes/kuromi.js" },
+    { "name": "comic", "css": "css/themes/comic.css", "js": "js/themes/comic.js" },
+    { "name": "matrix", "css": "css/themes/matrix.css", "js": "js/themes/matrix.js" },
+    { "name": "glitch", "css": "css/themes/glitch.css", "js": "js/themes/glitch.js" },
+    { "name": "anime", "css": "css/themes/anime.css", "js": "js/themes/anime.js" },
+    { "name": "cyberpunk", "css": "css/themes/cyberpunk.css", "js": "js/themes/cyberpunk.js" },
+    { "name": "minimal", "css": "css/themes/minimal.css", "js": "js/themes/minimal.js" }
   ],
   "categories": [
     {

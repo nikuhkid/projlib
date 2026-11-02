@@ -3,6 +3,7 @@
 
   const container = document.querySelector('.console-container');
   let interval = null;
+  const movements = new Set();
 
   // Katakana Unicode range: 0x30A0 - 0x30FF (skip 0x30A0, 0x30FB, 0x30FC for more readable chars)
   const katakana = [];
@@ -14,7 +15,7 @@
     const r = iframe ? iframe.getBoundingClientRect() : container.getBoundingClientRect();
     const c = document.createElement('div');
     c.className = 'theme-effect matrix-char';
-    c.style.position = 'absolute';
+    c.style.position = 'fixed';
     // Use the width of the iframe and offset from its left
     const minX = r.left;
     const maxX = r.left + r.width - 18;
@@ -31,14 +32,17 @@
     const move = setInterval(()=> {
       top += 6;
       c.style.top = top + 'px';
-      if (top > window.innerHeight + 20) { clearInterval(move); c.remove(); }
+      if (top > window.innerHeight + 20) { clearInterval(move); movements.delete(move); c.remove(); }
     }, 60);
+    movements.add(move);
   }
 
   interval = setInterval(spawnChar, 100);
 
   window.__themeCleanup = function(){
     if (interval) clearInterval(interval);
+    movements.forEach(clearInterval);
+    movements.clear();
     document.querySelectorAll('.matrix-char').forEach(n=>n.remove());
   };
 })();
