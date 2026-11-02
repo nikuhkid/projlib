@@ -14,7 +14,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # The browser host targets Wolfie/Windows and requires the OS sandbox.
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +23,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium --only-shell
+      - run: npx playwright install chromium --only-shell
       - run: npm test
       - run: npm run test:browser -- --workers=2
       - run: npm run build
