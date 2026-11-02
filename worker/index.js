@@ -1,6 +1,12 @@
 // Public, stateless web proxy for ProjLib. No identity provider or visitor login.
 // It rewrites ordinary HTML/CSS navigation; it is not a VPN or a full browser emulator.
 const PREFIX = '/proxy/';
+const UPSTREAM_REQUEST_HEADERS = [
+  'accept', 'accept-language', 'content-type', 'range', 'if-none-match', 'if-modified-since',
+  // Match HTTP browser detection to the real engine rendering the proxied page.
+  // Forward the default browser hints only; do not invent a Chrome version or platform.
+  'user-agent', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform'
+];
 
 export function validateTarget(value, proxyOrigin) {
   const target = new URL(value);
@@ -165,7 +171,7 @@ export default {
     try {
       const headers = new Headers();
       // Never forward ProjLib/Cloudflare cookies, authorization, or visitor IP headers.
-      for (const name of ['accept', 'accept-language', 'content-type', 'range', 'if-none-match', 'if-modified-since']) {
+      for (const name of UPSTREAM_REQUEST_HEADERS) {
         if (request.headers.has(name)) headers.set(name, request.headers.get(name));
       }
       const upstream = await fetch(target, {

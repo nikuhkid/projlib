@@ -104,6 +104,28 @@ test('POST forms and request ranges work without forwarding visitor credentials'
   assert.equal(upstream.headers.get('range'), 'bytes=0-99');
 });
 
+test('destinations receive the real browser identity without fabricated brands or device hints', async () => {
+  const profiles = [
+    {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+      'sec-ch-ua': '"Chromium";v="143", "Google Chrome";v="143"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"'
+    },
+    { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0' },
+    { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' }
+  ];
+  for (const profile of profiles) {
+    const response = await fetchProxy('/api', { headers: profile });
+    assert.equal(response.status, 200);
+    const upstream = requests.at(-1);
+    assert.equal(upstream.url, 'https://example.com/api');
+    for (const name of ['user-agent', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform']) {
+      assert.equal(upstream.headers.get(name), profile[name] || null, name);
+    }
+  }
+});
+
 test('health checks, CORS preflights, bodyless responses, and error pages behave correctly', async () => {
   assert.deepEqual(await (await runtime.dispatchFetch(`${origin}/health`)).json(), { service: 'projlib-proxy', status: 'ok' });
   const preflight = await fetchProxy('/api', { method: 'OPTIONS' });

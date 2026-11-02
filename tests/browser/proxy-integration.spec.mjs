@@ -13,10 +13,11 @@ test.beforeAll(async () => {
     outboundService: async request => {
       const url = new URL(request.url);
       if (url.pathname === '/api') return Response.json({ message: 'Fetch stayed on the proxy' });
+      if (url.pathname === '/browser-info') return Response.json({ userAgent: request.headers.get('user-agent') });
       if (url.pathname === '/redirect') return new Response(null, { status: 302, headers: { location: '/next' } });
       if (url.pathname === '/style.css') return new Response('#styled{color:rgb(12,34,56)}', { headers: { 'content-type': 'text/css' } });
       const title = url.pathname === '/next' ? 'Next page' : url.pathname === '/find' ? `Results: ${url.searchParams.get('q')}` : 'Proxy integration';
-      return new Response(`<!doctype html><html><head><title>Fixture</title><link rel="stylesheet" href="/style.css"></head><body><h1>${title}</h1><p id="styled">Styled through the proxy</p><p id="api">Waiting</p><a href="/next">Next</a><form action="/find"><input name="q" aria-label="Query"><button>Search</button></form><script>fetch('/api').then(r=>r.json()).then(data=>document.getElementById('api').textContent=data.message)</script></body></html>`, {
+      return new Response(`<!doctype html><html><head><title>Fixture</title><link rel="stylesheet" href="/style.css"></head><body><h1>${title}</h1><p id="styled">Styled through the proxy</p><p id="api">Waiting</p><p id="browserInfo">Waiting for browser identity</p><a href="/next">Next</a><form action="/find"><input name="q" aria-label="Query"><button>Search</button></form><script>fetch('/api').then(r=>r.json()).then(data=>document.getElementById('api').textContent=data.message);fetch('/browser-info').then(r=>r.json()).then(data=>document.getElementById('browserInfo').textContent=data.userAgent)</script></body></html>`, {
         headers: { 'content-type': 'text/html', 'x-frame-options': 'DENY' }
       });
     }
@@ -33,6 +34,9 @@ test('browser executes real rewritten HTML, CSS, fetch, links, forms and redirec
   const frame = page.frameLocator('#proxyFrame');
   await expect(frame.locator('h1')).toHaveText('Proxy integration');
   await expect(frame.locator('#api')).toHaveText('Fetch stayed on the proxy');
+  const nativeAgent = await page.evaluate(() => navigator.userAgent);
+  await expect(frame.locator('#browserInfo')).toHaveText(nativeAgent);
+  expect(await frame.locator('h1').evaluate(() => navigator.userAgent)).toBe(nativeAgent);
   await expect(frame.locator('#styled')).toHaveCSS('color', 'rgb(12, 34, 56)');
   await frame.getByRole('link', { name: 'Next', exact: true }).click();
   await expect(frame.locator('h1')).toHaveText('Next page');

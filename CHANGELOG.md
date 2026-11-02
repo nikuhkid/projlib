@@ -11,3 +11,4 @@
 - Replaced the duplicated draft README with documentation of the implemented behavior and its limits.
 - Made the repository public with explicit approval and enabled GitHub Pages.
 - Completed Cloudflare authorization on Wolfie, deployed `projlib-proxy`, and connected the Pages interface to its public Worker endpoint. Proxy Mode is enabled by default for new visitors; existing mode preferences are respected.
+- Restored the visitor's User-Agent and default browser client hints on proxy requests, keeping server-side browser detection consistent with the real browser rendering the page.

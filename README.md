@@ -15,6 +15,8 @@ The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projl
 
 The Worker handles public HTTP(S) destinations on standard ports. It rewrites HTML attributes, `srcset`, CSS URLs/imports, redirects, GET/POST forms, JavaScript fetch/XHR, and ordinary dynamically inserted links. It streams binary resources and forwards range requests.
 
+Browser detection receives the visitor's actual `User-Agent` and default browser client hints (brand, mobile flag, and platform). Opening ProjLib in Chrome therefore identifies HTTP requests as that Chrome browser, while JavaScript still runs in the same real browser. Other browsers keep their own identity; no fixed Chrome version is fabricated. This improves browser detection but does not add missing cookies, storage, or other browser capabilities.
+
 This is a stateless web proxy, not a VPN or a complete browser emulator. Cookies and authorization headers are not forwarded, and proxied documents are sandboxed without shared storage. Destination sign-ins, anti-bot challenges, DRM/video players, WebSockets, service workers, JavaScript module imports, and applications tied to their original origin may not work. Some bookmarked domains may also have expired since the original directory was written. **Open original** is always available. Browsing is not anonymous to the destination or hosting providers.
 
 ## Local development
