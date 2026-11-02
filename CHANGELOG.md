@@ -6,6 +6,7 @@
 - Added per-visitor cookies/storage, tab controls, keyboard/paste/touch input, session reconnection, idle cleanup, resource limits, and DNS-pinned public-network egress.
 - Verified login persistence, visitor isolation, session cleanup, and the complete interface/relay/browser path with a fake account fixture. Facebook and Instagram sign-in forms render; ChatGPT requires human verification. Real account sign-ins remain unverified.
 - User testing reached a repeating Instagram CAPTCHA. Documented the unresolved account-access limitation and Cloudflare's unsupported automated-browser environment; an installed Edge comparison did not remove ChatGPT's challenge.
+- Confirmed the reported check has Meta branding and is viewed in Brave on a computer. Kept its cause separate from Cloudflare's challenge policy, and added a cross-origin mouse click/drag regression check at a narrow viewport.
 - Removed Wix identity helpers, email allowlists, authorization checks, and masked link views.
 - Reconnected the original console: six category dropdowns, URL input, Proxy Mode, Home, Refresh, Fullscreen, and eight themes.
 - Fixed the invalid pasted patch instruction in the main theme script, cross-origin refresh errors, theme cleanup leaks, and the inaccessible proxy checkbox.

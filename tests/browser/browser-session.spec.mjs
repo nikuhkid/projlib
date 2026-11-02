@@ -13,6 +13,21 @@ const KEY = 'test-host-key-for-local-tests-only-1234567890x';
 let runtime, fixture, engine, host, proxyBase;
 test.beforeAll(async () => {
   fixture = http.createServer((request, response) => {
+    if (request.url === '/input') {
+      response.setHeader('content-type', 'text/html');
+      response.end('<html><head><title>Input fixture</title></head><body style="margin:0"><iframe title="Cross-origin input" src="http://frame.test/drag" style="border:0;width:100%;height:320px"></iframe></body></html>');
+      return;
+    }
+    if (request.url === '/drag') {
+      response.setHeader('content-type', 'text/html');
+      response.end(`<html><head><style>body{margin:0;font:18px Arial}#box{margin:30px;width:60px;height:60px;background:teal;touch-action:none}button{margin:20px}</style></head><body><button id="click">Click test</button><p id="result">Waiting</p><div id="box">Drag</div><script>
+        const result=document.getElementById('result'),box=document.getElementById('box');let start;
+        document.getElementById('click').onclick=()=>result.textContent='Click received';
+        box.onpointerdown=event=>{start=event.clientX;box.setPointerCapture(event.pointerId)};
+        box.onpointerup=event=>{result.textContent=event.clientX-start>150?'Drag received':'Drag incomplete'};
+      </script></body></html>`);
+      return;
+    }
     if (request.url === '/login' && request.method === 'POST') {
       request.resume(); response.writeHead(303, { location: '/account', 'set-cookie': 'session=fixture; HttpOnly; Path=/; SameSite=Lax' }); response.end(); return;
     }
@@ -29,7 +44,7 @@ test.beforeAll(async () => {
   }));
   proxyBase = (await runtime.ready).origin;
   engine = new BrowserEngine({ guardFactory: () => createNetworkGuard({
-    resolveHost: async hostname => { if (hostname !== 'fixture.test') throw new Error('Fixture only'); return { address: '127.0.0.1', family: 4 }; },
+    resolveHost: async hostname => { if (!['fixture.test', 'frame.test'].includes(hostname)) throw new Error('Fixture only'); return { address: '127.0.0.1', family: 4 }; },
     makeRequest: (options, callback) => http.request({ ...options, port: fixture.address().port }, callback)
   }) });
   await new Promise(resolve => {
@@ -45,16 +60,19 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: true, defaultHome: 'http://fixture.test/', proxyBase } }));
 });
 
-async function clickRemote(page, selector, remote) {
-  const box = await remote.locator(selector).boundingBox();
+async function canvasPoint(page, x, y) {
   const canvas = page.locator('#browserCanvas');
   const geometry = await canvas.evaluate(canvas => {
     const box = canvas.getBoundingClientRect();
     return { width: box.width, height: box.height, pixelsW: canvas.width, pixelsH: canvas.height };
   });
   const scale = Math.min(geometry.width / geometry.pixelsW, geometry.height / geometry.pixelsH);
-  await canvas.click({ position: { x: (geometry.width - geometry.pixelsW * scale) / 2 + (box.x + box.width / 2) * scale,
-    y: (geometry.height - geometry.pixelsH * scale) / 2 + (box.y + box.height / 2) * scale } });
+  return { x: (geometry.width - geometry.pixelsW * scale) / 2 + x * scale,
+    y: (geometry.height - geometry.pixelsH * scale) / 2 + y * scale };
+}
+async function clickRemote(page, selector, remote) {
+  const box = await remote.locator(selector).boundingBox();
+  await page.locator('#browserCanvas').click({ position: await canvasPoint(page, box.x + box.width / 2, box.y + box.height / 2) });
 }
 
 test('canvas input signs into a real browser, refresh/resume keep cookies, visitors are isolated, and End session clears the context', async ({ page, browser }) => {
@@ -100,4 +118,30 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   await expect(page.locator('#statusMessage')).toContainText('Browser session ended');
   await expect.poll(() => engine.sessions.size).toBe(0);
   expect(errors).toEqual([]);
+});
+
+test('mouse clicks and drags reach a cross-origin frame at a narrow viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/projlib/');
+  await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
+  const session = [...engine.sessions.values()][0];
+  const remote = session.pages.get(session.active).page;
+  await page.locator('#urlInput').fill('http://fixture.test/input');
+  await page.getByRole('button', { name: 'Engage' }).click();
+  await expect(page.locator('#browserTabs')).toContainText('Input fixture');
+  const child = remote.frameLocator('iframe');
+  await clickRemote(page, '#click', child);
+  await expect(child.locator('#result')).toHaveText('Click received');
+  const box = await child.locator('#box').boundingBox();
+  const start = await canvasPoint(page, box.x + 20, box.y + 20);
+  const end = await canvasPoint(page, box.x + 200, box.y + 20);
+  await page.locator('#browserCanvas').scrollIntoViewIfNeeded();
+  const canvasBox = await page.locator('#browserCanvas').boundingBox();
+  await page.mouse.move(canvasBox.x + start.x, canvasBox.y + start.y);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + end.x, canvasBox.y + end.y, { steps: 12 });
+  await page.mouse.up();
+  await expect(child.locator('#result')).toHaveText('Drag received');
+  await page.getByRole('button', { name: 'End session', exact: true }).click();
+  await expect.poll(() => engine.sessions.size).toBe(0);
 });
