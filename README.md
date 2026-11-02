@@ -17,6 +17,8 @@ Website JavaScript, redirects, HTTPS/WSS, login forms, and cookies execute norma
 
 There are at most two simultaneous visitors and four tabs per visitor. End session destroys the visitor's context. Sessions also end after 20 minutes without input, one minute disconnected, a host restart, or critically low host memory. Cookies are temporary; they are not saved as a persistent account profile. On phones, tap Keyboard to enter text; swipe inside the view to scroll. Text paste works, but copying text out of the remote browser is not implemented.
 
+**Responsive** is the default stream setting: smaller JPEG images, up to 20 frames per second, and bounded pipelining to keep slow connections from replaying old frames. **Sharper** uses a larger, higher-quality image with a lower frame-rate ceiling. Actual frame rate depends on the page and connection. New clients receive binary JPEG packets; older cached clients retain the original JSON stream and full-size pointer mapping. Wheel events are combined while preserving their total distance and the order of clicks/keys.
+
 This version streams images and input. Audio, camera/microphone, file uploads/downloads, passkeys, and screen-reader access to the remote page are not implemented. Facebook and Instagram's sign-in forms rendered in the Wolfie smoke check, but user testing reached a repeating Instagram CAPTCHA. Instagram account access is therefore still blocked. ChatGPT presented a human-verification checkbox and has not reached a verified login. A fresh test with installed Edge also reached ChatGPT's challenge; changing the browser brand alone did not remove it.
 
 Cloudflare lists automated browsers and automation frameworks, including Playwright, as [unsupported for production challenges](https://developers.cloudflare.com/cloudflare-challenges/reference/supported-browsers/). This is relevant to ChatGPT's observed Cloudflare challenge; it does not establish the cause of Instagram's failure. The user confirmed Brave on a computer and a Meta-branded check. Brave displays the stream while the destination runs in Chromium on Wolfie. The underlying verification provider and reason for the loop remain unknown. Cookies/login persistence and cross-origin mouse clicks/drags work in controlled fixtures; those checks do not prove that Meta or ChatGPT accepts the remote browser.
@@ -94,6 +96,8 @@ Use `npm run browser:stop` from this checkout to close the host and all its priv
 The host connects outbound to `/browser/host`. The Worker authenticates it and routes visitors through a Durable Object. There is no public inbound server, desktop access, or CDP port. Only the egress guard binds loopback. `/browser/health` reports whether the host is connected, without exposing visitor data. Host logs contain connection status only. No Windows service, startup task, or machine setting is installed by these commands; run the host manually after a reboot.
 
 The egress guard validates all DNS answers and connects to a pinned public IP. Chromium's implicit loopback proxy bypass is disabled and WebRTC is restricted to proxied traffic. Input commands are allowlisted, message sizes/rates bounded, and slow clients cannot accumulate unlimited frames. See [browser-sessions.md](docs/browser-sessions.md) for the implementation boundary.
+
+Performance measurements and the reproducible slower-link comparison are in [stream-performance.md](docs/stream-performance.md).
 
 ### GitHub Pages
 

@@ -10,6 +10,9 @@
       this.canvas = document.getElementById('browserCanvas');
       this.keyboard = document.getElementById('browserKeyboard');
       this.tabs = document.getElementById('browserTabs');
+      this.quality = document.getElementById('streamQuality');
+      this.quality.disabled = true;
+      this.quality.addEventListener('change', () => this.send({ type: 'streamQuality', quality: this.quality.value }));
       this.root.querySelectorAll('[data-browser-action]').forEach(button => button.addEventListener('click', () => {
         const action = button.dataset.browserAction;
         if (action === 'end') this.end();
@@ -35,6 +38,12 @@
       } catch { return null; }
     }
     send(message) {
+      if (!['wheel', 'frameAck', 'ping'].includes(message.type) && this.scrollTimer) {
+        clearTimeout(this.scrollTimer); this.scrollTimer = null;
+        const wheel = { type: 'wheel', x: this.scrollX, y: this.scrollY };
+        this.scrollX = this.scrollY = 0;
+        if (this.session && this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify(wheel));
+      }
       if (this.socket?.readyState === WebSocket.OPEN) { this.socket.send(JSON.stringify(message)); return true; }
       return false;
     }
@@ -50,13 +59,22 @@
       const endpoint = new URL('/browser/connect', this.base);
       endpoint.protocol = endpoint.protocol === 'https:' ? 'wss:' : 'ws:';
       const socket = this.socket = new WebSocket(endpoint);
+      socket.binaryType = 'arraybuffer';
       this.onStatus('Connecting to the private browser on Wolfie…');
       let started = false;
       socket.addEventListener('open', () => {
         started = true;
-        this.send({ type: 'start', url, viewport: this.viewport(), ...this.saved() });
+        this.send({ type: 'start', stream: 2, url, viewport: this.viewport(), ...this.saved() });
       });
       socket.addEventListener('message', event => {
+        if (this.socket !== socket) return;
+        if (event.data instanceof ArrayBuffer) {
+          if (event.data.byteLength < 10 || event.data.byteLength > 1350008) return;
+          const view = new DataView(event.data), width = view.getUint16(4), height = view.getUint16(6);
+          if (width < 320 || width > 1600 || height < 240 || height > 1200) return;
+          this.draw({ frameId: view.getUint32(0), width, height, jpeg: event.data.slice(8) });
+          return;
+        }
         let message; try { message = JSON.parse(event.data); } catch { return; }
         if (message.type === 'session') {
           clearTimeout(this.connectTimer);
@@ -64,6 +82,7 @@
           this.saved({ sessionId: message.sessionId, sessionToken: message.sessionToken });
           if (this.pendingUrl) { this.send({ type: 'navigate', url: this.pendingUrl }); this.pendingUrl = null; }
         } else if (message.type === 'state') {
+          if (message.streamQuality) { this.quality.value = message.streamQuality; this.quality.disabled = false; }
           this.currentUrl = message.url;
           this.renderTabs(message); this.onState(message);
         } else if (message.type === 'frame') this.draw(message);
@@ -95,11 +114,19 @@
     }
     async draw(frame) {
       const socket = this.socket, generation = this.generation;
+      const sequence = this.receivedFrame = (this.receivedFrame || 0) + 1;
+      let picture, objectUrl;
       try {
-        const picture = new Image();
-        picture.src = `data:image/jpeg;base64,${frame.data}`;
-        await picture.decode();
+        if (frame.jpeg && typeof createImageBitmap === 'function') picture = await createImageBitmap(new Blob([frame.jpeg], { type: 'image/jpeg' }));
+        else {
+          picture = new Image();
+          picture.src = frame.jpeg ? (objectUrl = URL.createObjectURL(new Blob([frame.jpeg], { type: 'image/jpeg' }))) : `data:image/jpeg;base64,${frame.data}`;
+          await picture.decode();
+        }
         if (socket !== this.socket || generation !== this.generation || !this.session) return;
+        if (sequence <= (this.presentedFrame || 0)) return;
+        this.presentedFrame = sequence;
+        this.imageViewport = { width: frame.width, height: frame.height };
         if (this.canvas.width !== picture.width || this.canvas.height !== picture.height) {
           this.canvas.width = picture.width; this.canvas.height = picture.height;
         }
@@ -107,10 +134,14 @@
         this.canvas.dataset.hasFrame = 'true';
         this.onFrame();
       } catch { /* A damaged frame is replaced by the next one. */ }
-      finally { if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'frameAck' })); }
+      finally {
+        picture?.close?.(); if (objectUrl) URL.revokeObjectURL(objectUrl);
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'frameAck', frameId: frame.frameId }));
+      }
     }
     clear() {
       this.generation = (this.generation || 0) + 1;
+      clearTimeout(this.scrollTimer); this.scrollTimer = null; this.scrollX = this.scrollY = 0;
       this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
       delete this.canvas.dataset.hasFrame; this.keyboard.value = ''; this.tabs.replaceChildren();
     }
@@ -131,13 +162,13 @@
     point(event) {
       const rect = this.canvas.getBoundingClientRect();
       const scale = Math.min(rect.width / this.canvas.width, rect.height / this.canvas.height);
-      return { x: (event.clientX - rect.left - (rect.width - this.canvas.width * scale) / 2) / scale,
-        y: (event.clientY - rect.top - (rect.height - this.canvas.height * scale) / 2) / scale };
+      return { x: (event.clientX - rect.left - (rect.width - this.canvas.width * scale) / 2) / scale * (this.imageViewport?.width || this.canvas.width) / this.canvas.width,
+        y: (event.clientY - rect.top - (rect.height - this.canvas.height * scale) / 2) / scale * (this.imageViewport?.height || this.canvas.height) / this.canvas.height };
     }
     bindInput() {
       const pointer = (event, phase) => {
         const point = this.point(event);
-        if (point.x < 0 || point.y < 0 || point.x > this.canvas.width || point.y > this.canvas.height) return;
+        if (point.x < 0 || point.y < 0 || point.x > (this.imageViewport?.width || this.canvas.width) || point.y > (this.imageViewport?.height || this.canvas.height)) return;
         this.send({ type: 'pointer', phase, ...point, button: event.button === 1 ? 'middle' : 'left', count: event.detail === 2 ? 2 : 1 });
       };
       this.canvas.addEventListener('pointerdown', event => {
@@ -157,7 +188,13 @@
       });
       this.canvas.addEventListener('pointercancel', event => { this.touch = null; pointer(event, 'up'); });
       this.canvas.addEventListener('contextmenu', event => event.preventDefault());
-      this.canvas.addEventListener('wheel', event => { event.preventDefault(); this.send({ type: 'wheel', x: event.deltaX, y: event.deltaY }); }, { passive: false });
+      const scroll = (x, y) => {
+        this.scrollX = (this.scrollX || 0) + x; this.scrollY = (this.scrollY || 0) + y;
+        if (!this.scrollTimer) this.scrollTimer = setTimeout(() => {
+          this.scrollTimer = null; this.send({ type: 'wheel', x: this.scrollX, y: this.scrollY }); this.scrollX = this.scrollY = 0;
+        }, 33);
+      };
+      this.canvas.addEventListener('wheel', event => { event.preventDefault(); scroll(event.deltaX, event.deltaY); }, { passive: false });
       for (const target of [this.canvas, this.keyboard]) {
         target.addEventListener('keydown', event => {
           if (event.isComposing) return;

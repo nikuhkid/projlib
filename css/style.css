@@ -219,7 +219,7 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
 #proxyContainer:fullscreen { width: 100vw; height: 100vh; border: 0; border-radius: 0; }
 .browser-view { height: 100%; display: flex; flex-direction: column; font: 14px system-ui, sans-serif; }
 .browser-tools { display: flex; align-items: center; gap: 4px; padding: 5px; background: #222; flex-wrap: wrap; }
-.browser-tools button { border: 1px solid #666; border-radius: 4px; background: #333; color: #eee; padding: 5px 8px; font: inherit; }
+.browser-tools button, .browser-tools select { border: 1px solid #666; border-radius: 4px; background: #333; color: #eee; padding: 5px 8px; font: inherit; }
 .browser-tabs { display: flex; flex: 1; min-width: 80px; overflow-x: auto; gap: 4px; }
 .browser-tab { display: inline-flex; flex-shrink: 0; }
 .browser-tab button:first-child { max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
+import { encodeHostFrame } from '../worker/frame-protocol.js';
 
 const ORIGIN = 'https://nikuhkid.github.io';
 const KEY = 'test-host-key-for-local-tests-only-1234567890x';
 function inbox(socket) {
   const messages = [], waiting = [];
   socket.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
+    const message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
     const waiter = waiting.shift(); if (waiter) waiter(message); else messages.push(message);
   });
   socket.accept();
@@ -20,7 +21,7 @@ function inbox(socket) {
 
 test('relay authenticates the host, checks browser origin, assigns ownership, routes privately, and closes clients with the host', { timeout: 20000 }, async t => {
   const runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02',
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02',
     durableObjects: { BROWSER_RELAY: { className: 'BrowserRelay', useSQLite: true } },
     bindings: { FRONTEND_ORIGIN: ORIGIN, BROWSER_HOST_KEY: KEY }
   }));
@@ -48,6 +49,12 @@ test('relay authenticates the host, checks browser origin, assigns ownership, ro
   host.send(JSON.stringify({ type: 'message', clientId: secondJoin.clientId, message: { type: 'private', value: 'second visitor' } }));
   assert.equal((await nextFirst()).value, 'first visitor');
   assert.equal((await nextSecond()).value, 'second visitor');
+  host.send(encodeHostFrame(firstJoin.clientId,7,1280,800,new Uint8Array([255,216,255,217])));
+  const binary = await nextFirst();
+  assert.ok(binary instanceof ArrayBuffer);
+  assert.equal(new DataView(binary).getUint32(0),7);
+  host.send(JSON.stringify({type:'message',clientId:secondJoin.clientId,message:{type:'private',value:'second still private'}}));
+  assert.equal((await nextSecond()).value,'second still private');
   const closed = new Promise(resolve => first.addEventListener('close', resolve, { once: true }));
   host.close(1000, 'Test finished.');
   assert.equal((await closed).code, 1012);

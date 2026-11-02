@@ -1,5 +1,8 @@
 import WebSocket from 'ws';
 import { BrowserEngine, BrowserError } from './browser-engine.mjs';
+import { FrameWindow } from './frame-window.mjs';
+import { InputQueue } from './input-queue.mjs';
+import { encodeHostFrame } from '../worker/frame-protocol.js';
 
 // Only the Worker can reach this host connection. No inbound server or public CDP.
 export class RelayHost {
@@ -21,7 +24,11 @@ export class RelayHost {
       const id = envelope.clientId;
       if (envelope.type === 'join') {
         this.release(id);
-        this.peers.set(id, { id, started: Date.now(), count: 0, sequence: Promise.resolve() });
+        const peer = { id, started: Date.now(), count: 0 };
+        peer.queue = new InputQueue(message => this.command(peer, message), error => {
+          this.send(peer, { type: 'error', message: error instanceof BrowserError ? error.message : 'The browser could not complete that action.', code: error.code || 'browser-error' });
+        });
+        this.peers.set(id, peer);
       } else if (envelope.type === 'leave') this.release(id);
       else if (envelope.type === 'message') this.receive(id, envelope.message);
     });
@@ -46,33 +53,22 @@ export class RelayHost {
   release(id) {
     const peer = this.peers.get(id);
     if (!peer) return;
-    this.peers.delete(id); clearTimeout(peer.frameTimer); peer.pendingFrame = null; peer.unsubscribe?.();
+    this.peers.delete(id); peer.frames?.close(); peer.queue.close(); peer.unsubscribe?.();
   }
-  frame(peer, frame) {
-    peer.pendingFrame = frame;
-    if (peer.awaitingFrame && Date.now() - peer.frameSent < 5000) return;
-    if (this.send(peer, frame)) {
-      peer.pendingFrame = null; peer.awaitingFrame = true; peer.frameSent = Date.now();
-    } else if (!peer.frameTimer && this.peers.get(peer.id) === peer) {
-      peer.frameTimer = setTimeout(() => { peer.frameTimer = null; if (peer.pendingFrame) this.frame(peer, peer.pendingFrame); }, 100);
-      peer.frameTimer.unref();
-    }
+  sendFrame(peer, frame, frameId) {
+    if (!peer.binary) return this.send(peer, { ...frame, frameId });
+    if (this.peers.get(peer.id) !== peer || this.socket?.readyState !== WebSocket.OPEN || this.socket.bufferedAmount > 256000) return false;
+    this.socket.send(encodeHostFrame(peer.id, frameId, frame.width, frame.height, Buffer.from(frame.data, 'base64')));
+    return true;
   }
   receive(id, message) {
     const peer = this.peers.get(id);
     if (!peer || !message || typeof message !== 'object' || Array.isArray(message)) return;
+    if (message.type === 'frameAck') { peer.frames?.acknowledge(message.frameId); return; }
     if (Date.now() - peer.started >= 1000) { peer.started = Date.now(); peer.count = 0; }
     if (++peer.count > 90) { this.send(peer, { type: 'error', message: 'Too many browser commands.' }); return; }
-    if (message.type === 'frameAck') {
-      peer.awaitingFrame = false;
-      if (peer.pendingFrame) this.frame(peer, peer.pendingFrame);
-      return;
-    }
-    if (peer.queued >= 40) return;
-    peer.queued = (peer.queued || 0) + 1;
-    peer.sequence = peer.sequence.then(() => this.command(peer, message)).catch(error => {
-      this.send(peer, { type: 'error', message: error instanceof BrowserError ? error.message : 'The browser could not complete that action.', code: error.code || 'browser-error' });
-    }).finally(() => { peer.queued--; });
+    if (message.type === 'ping') { this.send(peer, { type: 'pong', id: Number.isSafeInteger(message.id) ? message.id : null }); return; }
+    peer.queue.push(message);
   }
   async command(peer, message) {
     if (this.peers.get(peer.id) !== peer) return;
@@ -90,21 +86,24 @@ export class RelayHost {
       if (this.peers.get(peer.id) !== peer) { this.engine.scheduleDisconnect(session); return; }
       if (session.viewers) throw new BrowserError('This session is already open in another connection.');
       peer.session = session;
+      peer.binary = message.stream === 2;
+      if (!peer.binary && session.streamQuality !== 'legacy') await this.engine.action(session, { type: 'streamQuality', quality: 'legacy' });
+      else if (peer.binary && session.streamQuality === 'legacy') await this.engine.action(session, { type: 'streamQuality', quality: 'responsive' });
+      peer.frames = new FrameWindow((frame, id) => this.sendFrame(peer, frame, id), { limit: peer.binary ? 2 : 1 });
       this.send(peer, { type: 'session', ...credentials });
-      // One in-flight image and one latest pending image per visitor.
       peer.unsubscribe = this.engine.subscribe(session, message => {
         if (message.type === 'ended') {
-          clearTimeout(peer.frameTimer); peer.pendingFrame = null; peer.session = null;
+          peer.frames.close(); peer.session = null;
           peer.unsubscribe?.(); peer.unsubscribe = null;
         }
         this.send(peer, message);
-      }, frame => this.frame(peer, frame));
+      }, frame => peer.frames.push(frame));
       return;
     }
     if (!peer.session || !this.engine.sessions.has(peer.session.id)) throw new BrowserError('Start a browser session first.', 'session-unavailable');
     if (message.type === 'end') {
       await this.engine.end(peer.session);
-      clearTimeout(peer.frameTimer); peer.pendingFrame = null;
+      peer.frames.close();
       peer.unsubscribe?.(); peer.unsubscribe = null; peer.session = null; return;
     }
     await this.engine.action(peer.session, message);

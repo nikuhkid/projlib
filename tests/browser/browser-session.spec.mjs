@@ -21,6 +21,7 @@ test.beforeAll(async () => {
     if (request.url === '/drag') {
       response.setHeader('content-type', 'text/html');
       response.end(`<html><head><style>body{margin:0;font:18px Arial}#box{margin:30px;width:60px;height:60px;background:teal;touch-action:none}button{margin:20px}</style></head><body><button id="click">Click test</button><p id="result">Waiting</p><div id="box">Drag</div><script>
+        window.wheelEvents=[];window.addEventListener('wheel',event=>window.wheelEvents.push(event.deltaY));
         const result=document.getElementById('result'),box=document.getElementById('box');let start;
         document.getElementById('click').onclick=()=>result.textContent='Click received';
         box.onpointerdown=event=>{start=event.clientX;box.setPointerCapture(event.pointerId)};
@@ -37,7 +38,7 @@ test.beforeAll(async () => {
   });
   fixture.listen(0, '127.0.0.1'); await once(fixture, 'listening');
   runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
     compatibilityDate: '2026-11-02', port: 0,
     durableObjects: { BROWSER_RELAY: { className: 'BrowserRelay', useSQLite: true } },
     bindings: { FRONTEND_ORIGIN: 'http://127.0.0.1:4173', BROWSER_HOST_KEY: KEY }
@@ -67,8 +68,9 @@ async function canvasPoint(page, x, y) {
     return { width: box.width, height: box.height, pixelsW: canvas.width, pixelsH: canvas.height };
   });
   const scale = Math.min(geometry.width / geometry.pixelsW, geometry.height / geometry.pixelsH);
-  return { x: (geometry.width - geometry.pixelsW * scale) / 2 + x * scale,
-    y: (geometry.height - geometry.pixelsH * scale) / 2 + y * scale };
+  const viewport = [...engine.sessions.values()][0].viewport;
+  return { x: (geometry.width - geometry.pixelsW * scale) / 2 + x * geometry.pixelsW / viewport.width * scale,
+    y: (geometry.height - geometry.pixelsH * scale) / 2 + y * geometry.pixelsH / viewport.height * scale };
 }
 async function clickRemote(page, selector, remote) {
   const box = await remote.locator(selector).boundingBox();
@@ -77,10 +79,12 @@ async function clickRemote(page, selector, remote) {
 
 test('canvas input signs into a real browser, refresh/resume keep cookies, visitors are isolated, and End session clears the context', async ({ page, browser }) => {
   test.setTimeout(60000);
+  await page.setViewportSize({width:1800,height:1400});
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/projlib/');
   await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
   await expect(page.locator('#browserTabs')).toContainText('Fixture sign in');
+  await expect.poll(()=>page.locator('#browserCanvas').evaluate(canvas=>canvas.width)).toBeLessThanOrEqual(1152);
   const first = [...engine.sessions.values()][0];
   const remote = first.pages.get(first.active).page;
   await clickRemote(page, '[name=user]', remote);
@@ -97,6 +101,9 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
     return r < 230 && g > 240 && b < 230;
   })).toBe(true);
   await expect(page.locator('#urlInput')).toHaveValue('http://fixture.test/account');
+  await page.getByLabel('Stream quality').selectOption('sharp');
+  await expect.poll(()=>page.locator('#browserCanvas').evaluate(canvas=>canvas.width)).toBeGreaterThan(1152);
+  await page.getByLabel('Stream quality').selectOption('responsive');
   await page.locator('#refreshBtn').click();
   await expect(remote.locator('h1')).toHaveText('Private account');
   await page.reload();
@@ -120,7 +127,11 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   expect(errors).toEqual([]);
 });
 
-test('mouse clicks and drags reach a cross-origin frame at a narrow viewport', async ({ page }) => {
+test('mouse clicks, drags, and coalesced scrolling reach a cross-origin frame at a narrow viewport', async ({ page }) => {
+  const wheelPackets=[];
+  page.on('websocket',socket=>socket.on('framesent',({payload})=>{
+    const message=JSON.parse(payload);if(message.type==='wheel')wheelPackets.push(message);
+  }));
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/projlib/');
   await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
@@ -142,6 +153,11 @@ test('mouse clicks and drags reach a cross-origin frame at a narrow viewport', a
   await page.mouse.move(canvasBox.x + end.x, canvasBox.y + end.y, { steps: 12 });
   await page.mouse.up();
   await expect(child.locator('#result')).toHaveText('Drag received');
+  await page.locator('#browserCanvas').evaluate(canvas=>{
+    for(let i=0;i<100;i++)canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:2,bubbles:true,cancelable:true}));
+  });
+  await expect.poll(()=>child.locator('body').evaluate(()=>window.wheelEvents.reduce((sum,value)=>sum+value,0))).toBe(200);
+  expect(wheelPackets).toEqual([{type:'wheel',x:0,y:200}]);
   await page.getByRole('button', { name: 'End session', exact: true }).click();
   await expect.poll(() => engine.sessions.size).toBe(0);
 });

@@ -13,6 +13,7 @@ Run the browser backend on Wolfie. The user selected this route because the mach
 - Use a real Chromium browser with its operating-system sandbox enabled.
 - Create a separate incognito browser context for each visitor. Keep cookies and storage in that context, separate from the host's regular browser profile.
 - Display remote page frames in ProjLib; route pointer, keyboard, navigation, and tab controls to that visitor's session. Website JavaScript executes in its original origin inside Chromium.
+- Negotiate binary image streaming with bounded pipelining, smaller Responsive frames, optional Sharper frames, and coalesced scrolling. Keep the legacy full-resolution JSON stream compatible with older clients. See [stream-performance.md](stream-performance.md).
 - Connect Wolfie outbound over an authenticated WebSocket to a Cloudflare Worker and Durable Object relay. No public inbound listener, tunnel daemon, desktop access, or DevTools port is exposed. Host authentication is internal; visitors do not need a ProjLib account.
 - Use unpredictable session capabilities, origin checks, bounded message sizes, session and idle limits, and no logging of keyboard input or browser credentials.
 - Restrict browser network access to public HTTP(S) destinations through a DNS-pinning egress proxy. Block local/private addresses, file URLs, host downloads, and direct DevTools access.

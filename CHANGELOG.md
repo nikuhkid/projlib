@@ -2,6 +2,7 @@
 
 ## 2026-11-02
 
+- Reduced browser-stream overhead with binary JPEG transfer, bounded frame pipelining, Responsive/Sharper choices, scaled pointer mapping, and coalesced scrolling. Controlled slower-link measurements used 49% fewer bytes per frame and improved median frame cadence from 372 ms to 144 ms.
 - Added isolated, sandboxed Chromium sessions on Wolfie, streamed through an authenticated outbound Cloudflare Durable Object relay. No public desktop or DevTools port is exposed.
 - Added per-visitor cookies/storage, tab controls, keyboard/paste/touch input, session reconnection, idle cleanup, resource limits, and DNS-pinned public-network egress.
 - Verified login persistence, visitor isolation, session cleanup, and the complete interface/relay/browser path with a fake account fixture. Facebook and Instagram sign-in forms render; ChatGPT requires human verification. Real account sign-ins remain unverified.

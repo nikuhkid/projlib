@@ -11,6 +11,11 @@ const KEYS = new Set(['Enter', 'Shift+Enter', 'Tab', 'Shift+Tab', 'Escape', 'Bac
   'Shift+ArrowLeft', 'Shift+ArrowRight', 'Shift+ArrowUp', 'Shift+ArrowDown', 'Shift+Home', 'Shift+End']);
 const digest = value => createHash('sha256').update(String(value)).digest();
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Math.round(Number(value)) || min));
+const STREAMS = {
+  legacy: { quality: 55, maxWidth: 1600, maxHeight: 1200, interval: 125 },
+  responsive: { quality: 42, maxWidth: 1152, maxHeight: 864, interval: 50 },
+  sharp: { quality: 65, maxWidth: 1600, maxHeight: 1200, interval: 67 }
+};
 export class BrowserError extends Error {
   constructor(message, code = 'browser-error') { super(message); this.code = code; }
 }
@@ -61,7 +66,7 @@ export class BrowserEngine {
     const token = randomBytes(32).toString('base64url');
     const session = { id, tokenHash: digest(token), events: new EventEmitter(), pages: new Map(),
       viewport: { width: clamp(viewport.width || 1280, 320, 1600), height: clamp(viewport.height || 800, 240, 1200) },
-      lastInput: now, viewers: 0, sequence: Promise.resolve(), queued: 0, lastFrame: 0 };
+      lastInput: now, viewers: 0, sequence: Promise.resolve(), queued: 0, lastFrame: 0, streamQuality: 'responsive' };
     this.sessions.set(id, session);
     try {
       const browser = await this.ensureBrowser();
@@ -130,7 +135,7 @@ export class BrowserEngine {
             if (!frame || !this.sessions.has(session.id) || session.active !== frame.tab || session.viewers < 1 || session.paused) return;
             session.lastFrame = Date.now();
             session.events.emit('frame', { type: 'frame', data: frame.data, width: frame.width, height: frame.height });
-          }, Math.max(0, 125 - (Date.now() - session.lastFrame)));
+          }, Math.max(0, STREAMS[session.streamQuality].interval - (Date.now() - session.lastFrame)));
           session.frameTimer.unref();
         }
       });
@@ -143,7 +148,7 @@ export class BrowserEngine {
   state(session) {
     const active = session.pages.get(session.active);
     return { type: 'state', url: active?.page.url() || '', busy: Boolean(active?.busy),
-      activeTab: session.active, viewport: session.viewport,
+      activeTab: session.active, viewport: session.viewport, streamQuality: session.streamQuality,
       tabs: [...session.pages.values()].map(record => ({ id: record.id, title: record.title, url: record.page.url() })) };
   }
   publishState(session) { if (this.sessions.has(session.id)) session.events.emit('message', this.state(session)); }
@@ -155,7 +160,8 @@ export class BrowserEngine {
       const wanted = record.id === session.active && session.viewers > 0 && !session.paused;
       if (wanted === Boolean(record.capturing)) continue;
       record.capturing = wanted;
-      if (wanted) await record.cdp.send('Page.startScreencast', { format: 'jpeg', quality: 55, maxWidth: 1600, maxHeight: 1200, everyNthFrame: 1 });
+      const { quality, maxWidth, maxHeight } = STREAMS[session.streamQuality];
+      if (wanted) await record.cdp.send('Page.startScreencast', { format: 'jpeg', quality, maxWidth, maxHeight, everyNthFrame: 1 });
       else await record.cdp.send('Page.stopScreencast').catch(() => {});
     }
   }
@@ -247,6 +253,13 @@ export class BrowserEngine {
       const dialog = record.dialog; record.dialog = null;
       if (command.accept) await dialog.accept(typeof command.text === 'string' ? command.text.slice(0,4096) : undefined);
       else await dialog.dismiss();
+    } else if (type === 'streamQuality') {
+      if (!Object.hasOwn(STREAMS, command.quality)) throw new BrowserError('Unknown stream quality.');
+      session.streamQuality = command.quality;
+      for (const record of session.pages.values()) if (record.capturing) {
+        record.capturing = false; await record.cdp.send('Page.stopScreencast').catch(() => {});
+      }
+      await this.capture(session); this.publishState(session);
     } else if (type === 'pause') { session.paused = Boolean(command.paused); await this.capture(session); }
     else throw new BrowserError('Unsupported browser command.');
   }

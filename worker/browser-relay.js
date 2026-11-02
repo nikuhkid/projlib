@@ -1,3 +1,4 @@
+import { decodeHostFrame } from './frame-protocol.js';
 const MAX_CLIENTS = 8;
 const CLIENT_BYTES = 65536;
 const HOST_BYTES = 2400000;
@@ -74,6 +75,14 @@ export class BrowserRelay {
     const attachment = socket.deserializeAttachment();
     const { role, id } = attachment;
     if (data === 'ping') { try { socket.send('pong'); } catch {} return; }
+    if (role === 'host' && data instanceof ArrayBuffer) {
+      try {
+        const frame = decodeHostFrame(data);
+        const destination = this.sockets(frame.clientId).find(peer => peer.deserializeAttachment()?.role === 'client');
+        if (destination) destination.send(frame.data);
+      } catch { socket.close(1008, 'Invalid image frame.'); }
+      return;
+    }
     if (typeof data !== 'string' || data.length > (role === 'host' ? HOST_BYTES : CLIENT_BYTES)) {
       socket.close(1009, 'Message too large.'); return;
     }

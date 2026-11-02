@@ -8,7 +8,7 @@ let runtime;
 let proxyBase;
 test.beforeAll(async () => {
   runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02', port: 0,
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02', port: 0,
     bindings: { FRONTEND_ORIGIN: 'http://127.0.0.1:4173' },
     outboundService: async request => {
       const url = new URL(request.url);
