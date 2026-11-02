@@ -174,6 +174,12 @@
         target.addEventListener('paste', event => { event.preventDefault(); this.send({ type: 'text', text: event.clipboardData.getData('text/plain').slice(0,16000) }); });
       }
       const flush = () => { if (!this.composing && this.keyboard.value) { this.send({ type: 'text', text: this.keyboard.value.slice(0,16000) }); this.keyboard.value = ''; } };
+      // Phone keyboards may emit input events without a useful keydown value.
+      this.keyboard.addEventListener('beforeinput', event => {
+        if (event.isComposing || this.composing) return;
+        const key = { deleteContentBackward: 'Backspace', deleteContentForward: 'Delete', insertLineBreak: 'Enter', insertParagraph: 'Enter' }[event.inputType];
+        if (key) { event.preventDefault(); this.send({ type: 'key', key }); }
+      });
       this.keyboard.addEventListener('input', flush);
       this.keyboard.addEventListener('compositionstart', () => { this.composing = true; });
       this.keyboard.addEventListener('compositionend', () => { this.composing = false; flush(); });

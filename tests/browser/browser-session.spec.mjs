@@ -66,7 +66,9 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   const first = [...engine.sessions.values()][0];
   const remote = first.pages.get(first.active).page;
   await clickRemote(page, '[name=user]', remote);
-  await page.keyboard.type('fixture-user');
+  await page.keyboard.type('fixture-userX');
+  await expect(remote.locator('[name=user]')).toHaveValue('fixture-userX');
+  await page.locator('#browserKeyboard').evaluate(input => input.dispatchEvent(new InputEvent('beforeinput', { inputType: 'deleteContentBackward', bubbles: true, cancelable: true })));
   await expect(remote.locator('[name=user]')).toHaveValue('fixture-user');
   await page.keyboard.press('Tab'); await page.keyboard.type('fixture-password');
   await expect(remote.locator('[name=password]')).toHaveValue('fixture-password');
