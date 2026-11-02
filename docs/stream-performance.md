@@ -18,12 +18,16 @@ The controlled local comparison uses the same generated page, browser viewport, 
 
 | Metric | Previous stream | Responsive binary stream |
 | --- | ---: | ---: |
-| Median transmitted frame | 141,064 bytes | 72,256 bytes |
+| Median frame message payload | 141,064 bytes | 72,256 bytes |
 | Median scrolling frame interval | 372 ms | 144 ms |
 | Frames delivered during the scroll/settle period | 7 | 13 |
 | Scrolling tail after the input burst | 872 ms | 355 ms |
 
 These measurements show approximately 49% fewer bytes per frame and a 2.6× improvement in frame cadence for that fixture/link. They do not promise the same gain on every website or connection. A "wheel to next frame" sample can include an image already in transit and must not be presented as input-to-paint latency.
+
+After deployment, the public Wikipedia run measured a median frame message of 82,683 bytes versus 168,996 before the update (51% smaller). The scrolling tail decreased from 1033 ms to 339 ms. Delivery remained uneven: the new scrolling frame interval was 57 ms median and 355 ms at the 95th percentile. Message payload sizes exclude WebSocket/TLS framing. These observations support lower image overhead and less scroll backlog, not a guarantee of native-browser latency.
+
+Deployment verification passed 23 Node checks, 10 Playwright checks, and the public Pages/browser smoke test, including reconnect and mobile resizing. The host was restarted with explicit user approval. No Windows startup task or other app configuration was changed.
 
 ## Reproduce
 
