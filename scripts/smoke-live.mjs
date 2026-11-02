@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
@@ -33,14 +33,12 @@ try {
   await page.locator('#urlInput').fill('https://example.com/');
   await page.getByRole('button', { name: 'Engage' }).click();
   const frameBody = page.frameLocator('#proxyFrame').locator('body');
-  await frameBody.waitFor({ state: 'visible' });
-  assert.match(await frameBody.innerText(), /documentation examples/i);
+  await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
   await Promise.all([
     page.waitForEvent('framenavigated', frame => frame.parentFrame() !== null && frame.url().includes('example.com')),
     page.locator('#refreshBtn').click()
   ]);
-  await frameBody.waitFor({ state: 'visible' });
-  assert.match(await frameBody.innerText(), /documentation examples/i);
+  await expect(frameBody).toContainText(/documentation examples/i, { timeout: 30000 });
   assert.deepEqual(errors, []);
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
