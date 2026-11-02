@@ -9,3 +9,4 @@
 - Replaced the defunct third-party proxy dependency with a self-hosted, stateless Cloudflare Worker.
 - Added Pages deployment, a browser-asset-only build, Worker runtime tests, and browser integration tests.
 - Replaced the duplicated draft README with documentation of the implemented behavior and its limits.
+- Made the repository public with explicit approval and enabled GitHub Pages. Cloudflare deployment is deferred at the user's request until desktop authorization is possible; Direct Mode remains usable meanwhile.

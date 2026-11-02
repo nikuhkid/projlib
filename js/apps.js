@@ -103,6 +103,11 @@
       const preference = utils.storage.get('projlib_proxy_mode');
       toggle.checked = Boolean(hub.proxyBase) && preference !== 'direct';
       toggle.addEventListener('change', () => {
+        if (toggle.checked && !hub.proxyBase) {
+          toggle.checked = false;
+          UI.status('Proxy Mode is not available yet. Use Direct Mode or Open original for now.', true);
+          return;
+        }
         utils.storage.set('projlib_proxy_mode', toggle.checked ? 'proxy' : 'direct');
         if (currentUrl) loadUrl(currentUrl);
       });
@@ -126,7 +131,12 @@
       });
       await setTheme();
       document.querySelectorAll('[data-needs-config]').forEach(control => { control.disabled = false; });
-      loadUrl(hub.defaultHome);
+      if (hub.proxyBase) {
+        loadUrl(hub.defaultHome);
+      } else {
+        document.getElementById('connectionNote').textContent = 'Direct Mode embeds sites that allow it. Use Open original if a site will not open here. Proxy Mode is not available yet.';
+        UI.status('Direct Mode is ready. Choose a site or enter a website address.');
+      }
     } catch (error) {
       stopLoading();
       UI.status(`${error.message} Reload the page to try again.`, true);

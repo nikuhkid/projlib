@@ -74,6 +74,21 @@ test('configuration failures are visible and leave navigation disabled', async (
   await expect(page.locator('#homeBtn')).toBeDisabled();
 });
 
+test('without a deployed proxy the console stays in Direct Mode and explains the unavailable switch', async ({ page }) => {
+  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, proxyBase: '' } }));
+  await page.goto('/projlib/');
+  await expect(page.locator('#homeBtn')).toBeEnabled();
+  await expect(page.locator('#proxyFrame')).toBeHidden();
+  await expect(page.locator('#proxyToggle')).not.toBeChecked();
+  await page.locator('#proxyToggle').click();
+  await expect(page.locator('#proxyToggle')).not.toBeChecked();
+  await expect(page.locator('#statusMessage')).toContainText('Proxy Mode is not available yet');
+  await page.locator('#urlInput').fill('example.com');
+  await page.getByRole('button', { name: 'Engage' }).click();
+  await expect(page.frameLocator('#proxyFrame').locator('h1')).toHaveText('Direct fixture');
+  await expect(page.locator('#openOriginal')).toHaveAttribute('href', 'https://example.com/');
+});
+
 test('console fits a narrow mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/projlib/');

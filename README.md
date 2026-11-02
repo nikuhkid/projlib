@@ -9,6 +9,8 @@ ProjLib is a public, themed website directory and web-proxy console. Pick a site
 
 The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projlib/>. The proxy runs separately on **Cloudflare Workers**: Pages serves static files and cannot run a proxy backend.
 
+**Current deployment:** the public interface is published on GitHub Pages. The Worker code is built and tested, but its deployment is deferred until Cloudflare authorization is completed on Wolfie. `proxyBase` is deliberately empty, so the live interface opens in Direct Mode and explains that Proxy Mode is not yet available. Deploying the Worker and setting its URL enables the switch without requiring visitor sign-in.
+
 ## What this proxy supports
 
 The Worker handles public HTTP(S) destinations on standard ports. It rewrites HTML attributes, `srcset`, CSS URLs/imports, redirects, GET/POST forms, JavaScript fetch/XHR, and ordinary dynamically inserted links. It streams binary resources and forwards range requests.
