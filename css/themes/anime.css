@@ -3,3 +3,14 @@ body.theme-anime { background:linear-gradient(180deg,#f7e6f7,#e6f0ff); color:#44
 body.theme-anime .title { color:#b97bbd; text-shadow:0 0 8px #e6b7e6; }
 body.theme-anime .dropbtn { background:#f7e6f7; color:#b97bbd; border:2px solid #e6b7e6; border-radius:18px; }
 body.theme-anime .dropdown-content { background:#f7e6f7; color:#b97bbd; border:2px solid #e6b7e6; border-radius:12px; }
+.theme-anime .anime-emblem { display: inline-flex; gap: 10px; align-items: center; padding: 5px 12px; border-radius: 6px; background: #27385b; color: #f0f2fc; box-shadow: 0 3px 0 #17233b; font: 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.theme-anime .anime-emblem svg { width: 75px; height: 36px; }
+.theme-anime .anime-emblem rect { fill: #c5ced7; stroke: #6c798e; stroke-width: 2; }
+.theme-anime .anime-emblem circle { fill: #667187; }
+.theme-anime .anime-emblem path { fill: none; stroke: #283449; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.dragon-ball { position: fixed; left: 0; top: 0; width: 30px; height: 30px; opacity: 0; filter: drop-shadow(0 2px 3px #5f2e2e55); will-change: transform, opacity; }
+.dragon-ball svg { display: block; width: 100%; height: 100%; }
+.theme-anime .connection-note { color: #62546c; }
+.theme-anime .scanner input { background: #fffaff; color: #423347; border-color: #c59bc4; }
+.theme-anime #statusMessage[data-error="true"] { color: #9e302a; }
+@media (max-width: 600px) { .theme-anime .header-row { align-items: center; } .theme-anime .anime-emblem span { display: none; } }

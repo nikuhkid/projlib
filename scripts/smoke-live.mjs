@@ -19,7 +19,10 @@ try {
   await page.waitForFunction(() => !document.getElementById('homeBtn').disabled);
   const config = await (await page.request.get(new URL('hubData.json', site).href)).json();
   const hasProxy = Boolean(config.proxyBase);
-  assert.equal(await page.locator('#proxyToggle').isChecked(), hasProxy);
+  assert.equal(await page.locator('#proxyToggle').isChecked(), false);
+  await expect(page.locator('#scannerPanel')).toBeHidden();
+  await page.locator('#scannerBtn').click();
+  if (hasProxy) await page.locator('#proxyToggle').check();
   let workerHealth = null;
   if (hasProxy) {
     const health = await page.request.get(`${config.proxyBase}/health`);
@@ -38,7 +41,16 @@ try {
     await page.locator('#refreshBtn').click();
     await expect(frameBody).toContainText(/documentation examples/i);
     await page.reload();
+    await expect(page.locator('#scannerPanel')).toBeHidden();
+    await expect(page.locator('#proxyToggle')).not.toBeChecked();
+    await page.locator('#scannerBtn').click();
+    await page.locator('#proxyToggle').check();
     await expect(frameBody).toContainText(/documentation examples/i, { timeout: 45000 });
+    await expect(page.locator('#viewerSources')).toBeVisible();
+    const viewer = await page.locator('#proxyContainer').boundingBox();
+    const source = await page.locator('#viewerSources').boundingBox();
+    assert.ok(source.y >= viewer.y + viewer.height);
+    await expect(page.frameLocator('#proxyFrame').locator('#viewerFooter')).toBeHidden();
   } else if (config.browserSessions) {
     const health = await page.request.get(`${config.proxyBase}/browser/health`);
     assert.equal((await health.json()).online, true);
@@ -47,6 +59,8 @@ try {
     await page.locator('#refreshBtn').click();
     await expect(page.locator('#browserTabs')).toContainText('Example Domain');
     await page.reload();
+    await page.locator('#scannerBtn').click();
+    await page.locator('#proxyToggle').check();
     await expect(page.locator('#browserTabs')).toContainText('Example Domain', { timeout: 30000 });
     await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
   } else {
@@ -61,6 +75,7 @@ try {
   await expect(page.locator('#loadingOverlay')).toBeHidden({ timeout: 30000 });
   await expect(page.locator('#statusMessage')).toHaveAttribute('data-error', 'false', { timeout: 10000 });
   assert.deepEqual(errors, []);
+  await page.locator('#scannerBtn').click();
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 375, height: 812 });

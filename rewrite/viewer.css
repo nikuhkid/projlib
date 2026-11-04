@@ -10,4 +10,5 @@ a { margin-left: auto; font-size: 12px; }
 #notice { margin: 0; padding: 8px 12px; }
 #notice:empty { display: none; }
 #site { width: 100%; flex: 1; min-height: 0; border: 0; background: white; }
+footer { display: flex; justify-content: flex-end; padding: 7px 10px; }
 [hidden] { display: none !important; }

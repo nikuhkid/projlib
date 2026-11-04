@@ -52,7 +52,12 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
 }
+.anime-emblem { display: none; }
+.theme-effects { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+.theme-effects * { pointer-events: none; }
+.header, .scanner-panel, .dropdowns-grid, .action-buttons, #statusMessage, .viewer-sources { position: relative; z-index: 2; }
 
 /* SWITCH */
 .switch {
@@ -94,8 +99,10 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
 }
 
 /* SCANNER */
+.scanner-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; margin: 12px 0; }
+.scanner-panel .connection-note { grid-column: 1 / -1; margin: 0; }
 .scanner {
-  margin: 10px 0;
+  margin: 0;
   display: flex;
   gap: 10px;
 }
@@ -165,6 +172,7 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
 /* PROXY CONTAINER */
 #proxyContainer {
   position: relative;
+  z-index: 2;
   background: #000;
   border: 2px solid #333;
   border-radius: 10px;
@@ -211,6 +219,8 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
 }
 
 #openOriginal, #openProxy { color: inherit; padding: 6px 12px; align-self: center; }
+.viewer-sources { padding: 10px 2px; text-align: right; font: 12px/1.4 system-ui, sans-serif; }
+.viewer-sources a { color: inherit; text-underline-offset: 3px; }
 .kuromi-sprite, .comic-sprite { pointer-events: none; transition: opacity .5s, transform .5s; }
 .fade-out { opacity: 0 !important; transform: scale(.6) !important; }
 #statusMessage { font: 14px/1.5 system-ui, sans-serif; margin: 14px 0 4px; }
@@ -232,6 +242,7 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
   .header .title { font-size: 1.25rem; overflow-wrap: anywhere; }
   .header-row { gap: 12px; flex-wrap: wrap; }
   .header-right { flex-wrap: wrap; }
+  .scanner-panel { grid-template-columns: minmax(0, 1fr); }
   .dropdowns-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   #proxyContainer { height: 65vh; }
 }

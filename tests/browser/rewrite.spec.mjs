@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createRewriteRuntime } from '../rewrite-runtime.mjs';
+import { enableProxy } from './enable-proxy.mjs';
 
 const hub = JSON.parse(await readFile('hubData.json', 'utf8'));
 let runtime, proxyBase;
@@ -15,10 +16,12 @@ test.afterEach(async ({ page }, info) => {
 });
 
 async function openFixture(page) {
+  await page.route('https://fixture.test/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Direct fixture</h1>' }));
   await page.route('**/hubData.json', route => route.fulfill({ json: {
     ...hub, browserSessions: false, rewriteProxy: true, defaultHome: 'https://fixture.test/', proxyBase
   } }));
   await page.goto('/projlib/');
+  await enableProxy(page);
   return page.frameLocator('#proxyFrame').frameLocator('#site');
 }
 
@@ -32,6 +35,11 @@ test('rewriting renders locally with modules, fetch, native identity, WebSockets
   await expect(site.locator('#dynamic')).toHaveText('Relative dynamic import loaded');
   await expect(site.locator('#api')).toHaveText('Dynamic fetch worked');
   await expect(site.locator('#socket')).toHaveText('WebSocket echo worked');
+  await expect(page.locator('#viewerSources')).toBeVisible();
+  const viewer = await page.locator('#proxyContainer').boundingBox();
+  const sources = await page.locator('#viewerSources').boundingBox();
+  expect(sources.y).toBeGreaterThanOrEqual(viewer.y + viewer.height);
+  await expect(page.frameLocator('#proxyFrame').locator('#viewerFooter')).toBeHidden();
   await expect(site.locator('#styled')).toHaveCSS('color', 'rgb(12, 34, 56)');
   await expect(site.locator('#identity')).toHaveText(await page.evaluate(() => navigator.userAgent));
   expect(await site.locator('h1').evaluate(() => {
@@ -58,6 +66,8 @@ test('rewriting renders locally with modules, fetch, native identity, WebSockets
   await debug.send('ServiceWorker.stopAllWorkers');
   await debug.detach();
   await page.reload();
+  await expect(page.locator('#proxyToggle')).not.toBeChecked();
+  await enableProxy(page);
   await expect(site.locator('h1')).toHaveText('Private fixture account');
   await expect(page.locator('#urlInput')).toHaveValue('https://fixture.test/account');
   const other = await browser.newContext();
@@ -66,6 +76,12 @@ test('rewriting renders locally with modules, fetch, native identity, WebSockets
     const separateSite = await openFixture(second);
     await expect(separateSite.locator('h1')).toHaveText('Fixture sign in');
     await expect(separateSite.locator('#storage')).toHaveText('empty');
+    await second.goto(`${proxyBase}/rewrite/#${new URLSearchParams({ url: 'https://fixture.test/' })}`);
+    await expect(second.frameLocator('#site').locator('h1')).toHaveText('Fixture sign in');
+    await expect(second.locator('#viewerFooter')).toBeVisible();
+    const siteBox = await second.locator('#site').boundingBox();
+    const footerBox = await second.locator('#viewerFooter').boundingBox();
+    expect(footerBox.y).toBeGreaterThanOrEqual(siteBox.y + siteBox.height);
   } finally { await other.close(); }
   await site.getByRole('link', { name: 'Other site' }).click();
   await expect(site.locator('h1')).toHaveText('Fixture sign in');
@@ -91,6 +107,7 @@ test('clearing proxy data removes its cookies and local storage', async ({ page 
   await page.frameLocator('#proxyFrame').getByRole('button', { name: 'Clear browsing data' }).click();
   await expect(page.frameLocator('#proxyFrame').locator('body')).toContainText('Proxy browsing data cleared');
   await page.reload();
+  await enableProxy(page);
   await expect(site.locator('h1')).toHaveText('Fixture sign in');
   await expect(site.locator('#storage')).toHaveText('empty');
 });

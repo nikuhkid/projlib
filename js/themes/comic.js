@@ -12,7 +12,7 @@
     img.style.height = '100px';
   img.style.zIndex = 2147483647;
     img.style.pointerEvents = 'none';
-    document.body.appendChild(img);
+    window.ProjLib.UI.effectLayer().appendChild(img);
     setTimeout(()=> { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 400); }, 650);
   }
   document.addEventListener('click', onClick);

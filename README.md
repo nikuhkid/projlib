@@ -9,7 +9,7 @@ ProjLib is a public, themed website directory and web-proxy console. Pick a site
 
 The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projlib/>. The proxy runs separately on **Cloudflare Workers**: Pages serves static files and cannot run a proxy backend.
 
-The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. New visitors start in Proxy Mode; an existing saved Direct Mode preference is respected. Cloudflare authorization is only needed to administer deployments. Rewriting runs through Cloudflare. The optional remote-browser fallback requires Wolfie's browser host.
+The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. Each page load starts in Direct Mode with Scanner closed. Scanner reveals the address bar and the unchecked Proxy Mode switch. Proxy routing is an explicit choice for that visit. Cloudflare authorization is only needed to administer deployments. Rewriting runs through Cloudflare. The optional remote-browser fallback requires Wolfie's browser host.
 
 ## Browser sessions
 
@@ -61,13 +61,13 @@ For local proxy testing, set `proxyBase` in `hubData.json` to the origin Wrangle
 `hubData.json` contains:
 
 - `defaultHome`: the website Home opens.
-- `proxyBase`: the deployed Worker origin, without a `/proxy/` suffix. Proxy Mode is enabled by default when this is set. An empty value leaves Direct Mode available.
+- `proxyBase`: the deployed Worker origin, without a `/proxy/` suffix. This makes the Proxy Mode switch available inside Scanner. An empty value leaves Direct Mode available.
 - `rewriteProxy`: use the local-rendering viewer when `true`. Publish the Worker assets before enabling this in Pages.
 - `browserSessions`: with rewriting disabled, use the Wolfie browser backend when `true`, or the stateless HTML proxy when `false`.
 - `categories`: the six dropdowns and their site names/URLs. The existing bookmarks are retained.
 - `themes`: the eight CSS/JavaScript theme pairs.
 
-Theme and mode preferences are optional: startup still works if the browser blocks local storage. Theme animations respect reduced-motion preferences and clean up when switched.
+Theme preferences are optional and startup works if the browser blocks local storage. Proxy Mode always starts off. Theme animations respect reduced-motion preferences and clean up when switched. Effects live behind the website window. Anime uses seven Dragon Balls and a Hidden Leaf headband, while Cyberpunk uses charcoal panels, yellow controls and cyan details.
 
 ## Deployment
 

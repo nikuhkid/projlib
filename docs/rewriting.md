@@ -6,6 +6,8 @@ Chrome on the visitor's device executes and renders the website. A service worke
 
 The GitHub Pages console embeds `/rewrite/` on the separate Worker origin. Its service worker is scoped to `/rewrite/`. The console, Worker management routes and remote browser relay are outside that scope. `rewriteProxy: true` selects this viewer. With it disabled, `browserSessions: true` selects the previous Wolfie browser, and disabling both selects the legacy stateless HTML proxy.
 
+The visitor starts in Direct Mode. Scanner reveals the address bar and Proxy Mode switch, which starts off on every page load. Enabling it opens the configured proxy viewer. The visible Source and licences link sits below the website window. The standalone viewer offers the same link below its inner iframe.
+
 ## Transport and storage
 
 The shared worker sends HTTP requests to `/rewrite/fetch`. Request and response metadata travel in explicit headers, while bodies are streamed as binary data. Upload bodies are buffered and limited to 16 MiB. A 30-second timeout applies until upstream response headers arrive. The response body can continue streaming afterwards. Each redirect goes back through the transport and destination validation.

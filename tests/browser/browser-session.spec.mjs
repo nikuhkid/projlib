@@ -7,6 +7,7 @@ import { once } from 'node:events';
 import { BrowserEngine } from '../../server/browser-engine.mjs';
 import { RelayHost } from '../../server/relay-host.mjs';
 import { createNetworkGuard } from '../../server/network-guard.mjs';
+import { enableProxy } from './enable-proxy.mjs';
 
 const hub = JSON.parse(await readFile('hubData.json', 'utf8'));
 const KEY = 'test-host-key-for-local-tests-only-1234567890x';
@@ -82,6 +83,7 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   await page.setViewportSize({width:1800,height:1400});
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/projlib/');
+  await enableProxy(page);
   await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
   await expect(page.locator('#browserTabs')).toContainText('Fixture sign in');
   await expect.poll(()=>page.locator('#browserCanvas').evaluate(canvas=>canvas.width)).toBeLessThanOrEqual(1152);
@@ -107,12 +109,14 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   await page.locator('#refreshBtn').click();
   await expect(remote.locator('h1')).toHaveText('Private account');
   await page.reload();
+  await enableProxy(page);
   await expect(page.locator('#browserTabs')).toContainText('Private account');
   expect(engine.sessions.size).toBe(1);
   const secondContext = await browser.newContext();
   const second = await secondContext.newPage();
   await second.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: true, defaultHome: 'http://fixture.test/account', proxyBase } }));
   await second.goto('http://127.0.0.1:4173/projlib/');
+  await enableProxy(second);
   await expect(second.locator('#browserTabs')).toContainText('Fixture sign in');
   await second.getByRole('button', { name: 'End session', exact: true }).click();
   await secondContext.close();
@@ -134,6 +138,7 @@ test('mouse clicks, drags, and coalesced scrolling reach a cross-origin frame at
   }));
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/projlib/');
+  await enableProxy(page);
   await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
   const session = [...engine.sessions.values()][0];
   const remote = session.pages.get(session.active).page;

@@ -16,6 +16,8 @@ Modified on 4 November 2026 for ProjLib. The build replaces the cookie and
 storage modules, makes response-cookie notifications asynchronous, persists
 response cookies, and preserves directory separators in encoded URLs.
 Readable adaptations and guarded build changes are in the source download.
+The source offer is displayed below the website iframe in the standalone
+viewer, and below the embedded viewer in the ProjLib console.
 
 bare-mux 2.1.9, Copyright 2024 Mercury Workshop Inc., MIT licence
 tough-cookie 6.0.2, Copyright (c) 2015 Salesforce.com, Inc., BSD-3-Clause

@@ -2,6 +2,7 @@
 (async () => {
   const notice = document.getElementById('notice');
   const element = document.getElementById('site');
+  if (parent !== window && new URLSearchParams(location.hash.slice(1)).get('sourceFooter') === 'outside') document.getElementById('viewerFooter').hidden = true;
   let frontend;
   let frame;
   function send(type, extra = {}) {

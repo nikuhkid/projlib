@@ -2,6 +2,8 @@
 
 ## 2026-11-04
 
+- Made Scanner controls hidden on startup and Proxy Mode opt-in on each page load. Moved the source offer below the website window.
+- Kept theme effects behind the website, limited Glitch filters to the header, replaced Anime's pastel particles with seven Dragon Balls and a Hidden Leaf headband, and redesigned Cyberpunk's controls and background.
 - Added local browser rendering through a pinned Scramjet rewriting component, with HTTP and WebSocket traffic relayed through the Cloudflare Worker.
 - Fixed cookie restoration, domain/path handling, response-cookie persistence, stylesheet notification deadlocks, storage clearing, and relative module imports in the integration.
 - Added Clear browsing data, a top-level proxy viewer link, and an AGPL source page with downloadable adaptations, complete upstream source, dependency notices and checksums.

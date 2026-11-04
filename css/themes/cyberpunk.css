@@ -1,5 +1,43 @@
-/* cyberpunk.css - neon gradient */
-body.theme-cyberpunk { background:linear-gradient(90deg,#2a003a,#003a3a); color:#b0e0e6; font-family:'Orbitron',sans-serif; }
-body.theme-cyberpunk .title { color:#b0e0e6; text-shadow:0 0 10px #0ff4; }
-body.theme-cyberpunk .dropbtn { background:linear-gradient(90deg,#3a005a,#005a5a); color:#b0e0e6; border:2px solid #0ff4; }
-body.theme-cyberpunk .dropdown-content { background:linear-gradient(90deg,#1a0021,#001018); color:#b0e0e6; border:2px solid #0ff4; }
+/* Carbon panels, signal yellow and cyan traces. The website has its own clear surface. */
+body.theme-cyberpunk {
+  --cyber-yellow: #f4eb36;
+  --cyber-cyan: #55e8f2;
+  --cyber-edge: #334450;
+  background: radial-gradient(ellipse at 12% 0, #12343e 0, transparent 44%), #070b10;
+  color: #dbe6eb;
+  font-family: 'Orbitron', system-ui, sans-serif;
+}
+.theme-cyberpunk .console-container { padding: 22px; border: 1px solid #27323d; border-top: 3px solid var(--cyber-yellow); background: #0d141cee; box-shadow: 0 24px 80px #0009; }
+.theme-cyberpunk .header { padding: 20px; border: 1px solid var(--cyber-edge); border-left: 4px solid var(--cyber-cyan); background: linear-gradient(105deg, #152531, #101720 72%); }
+.theme-cyberpunk .title { color: var(--cyber-yellow); font-size: clamp(1.25rem, 2.4vw, 2.1rem); letter-spacing: .08em; line-height: 1.4; text-align: left; text-shadow: 0 0 28px #f4eb3625; }
+.theme-cyberpunk .header-row { margin-top: 12px; }
+.theme-cyberpunk button { border: 1px solid var(--cyber-edge); border-radius: 0; padding: 10px 14px; background: #15222e; color: #e4f4f5; font-size: 12px; letter-spacing: .05em; }
+.theme-cyberpunk button:hover { background: #203644; border-color: var(--cyber-cyan); }
+.theme-cyberpunk button:focus-visible, .theme-cyberpunk input:focus-visible, .theme-cyberpunk select:focus-visible { outline-color: var(--cyber-yellow); }
+.theme-cyberpunk #scannerBtn, .theme-cyberpunk .scanner button { color: #11150e; background: var(--cyber-yellow); border-color: var(--cyber-yellow); font-weight: 700; }
+.theme-cyberpunk #scannerBtn:hover, .theme-cyberpunk .scanner button:hover { background: #fff977; }
+.theme-cyberpunk .scanner-panel { padding: 14px; border-left: 3px solid var(--cyber-yellow); background: #111e28; }
+.theme-cyberpunk .scanner input { border: 1px solid #405967; border-radius: 0; padding: 10px; background: #080f17; color: #e5f4f6; }
+.theme-cyberpunk .select-container { padding: 8px 10px; border: 1px solid var(--cyber-edge); border-bottom: 2px solid #386675; border-radius: 0; background: #111e28; }
+.theme-cyberpunk .select-container i { color: var(--cyber-cyan); }
+.theme-cyberpunk .select-container select { font-size: 11px; letter-spacing: .025em; }
+.theme-cyberpunk .select-container:focus-within { border-color: var(--cyber-cyan); }
+.theme-cyberpunk .action-buttons { padding: 12px 0; border-top: 1px solid var(--cyber-edge); border-bottom: 1px solid var(--cyber-edge); }
+.theme-cyberpunk .action-buttons a { color: var(--cyber-cyan); font: 13px system-ui, sans-serif; }
+.theme-cyberpunk #proxyContainer { border: 1px solid #47606b; border-top: 3px solid var(--cyber-cyan); border-radius: 0; box-shadow: 0 8px 30px #0007; }
+.theme-cyberpunk #statusMessage { padding-left: 12px; border-left: 2px solid var(--cyber-yellow); color: #b9d2dc; }
+.theme-cyberpunk #statusMessage[data-error="true"] { color: #ffad94; border-color: #ff8566; }
+.theme-cyberpunk .connection-note { color: #a3bbc8; }
+.theme-cyberpunk .switch { color: var(--cyber-cyan); font: 12px system-ui, sans-serif; white-space: nowrap; }
+.theme-cyberpunk .slider { border: 1px solid #527380; border-radius: 2px; background: #081016; }
+.theme-cyberpunk .slider::before { background: var(--cyber-cyan); border-radius: 1px; }
+.theme-cyberpunk .viewer-sources { color: #91b1bf; }
+.cyber-grid { position: absolute; inset: -60px; background-image: linear-gradient(#55e8f210 1px, transparent 1px), linear-gradient(90deg, #55e8f210 1px, transparent 1px); background-size: 60px 60px; animation: cyber-drift 14s linear infinite; }
+@keyframes cyber-drift { to { transform: translate3d(0, 60px, 0); } }
+@media (max-width: 600px) {
+  .theme-cyberpunk .console-container { padding: 12px; }
+  .theme-cyberpunk .header { padding: 14px 12px; }
+  .theme-cyberpunk .header-right { gap: 8px; }
+  .theme-cyberpunk button { padding: 9px 11px; }
+  .theme-cyberpunk .select-container { padding: 6px; }
+}

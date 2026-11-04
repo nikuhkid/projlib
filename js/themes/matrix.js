@@ -27,7 +27,7 @@
     c.textContent = katakana[Math.floor(Math.random()*katakana.length)];
     c.style.pointerEvents = 'none';
     c.style.zIndex = 1;
-    document.body.appendChild(c);
+    window.ProjLib.UI.effectLayer().appendChild(c);
     let top = -20;
     const move = setInterval(()=> {
       top += 6;

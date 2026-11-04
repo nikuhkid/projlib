@@ -1,6 +1,6 @@
-// glitch.js - add subtle flicker to container
+// Keep chromatic flicker on the header, with distortion bars behind the viewer.
 (function(){
-  const el = document.querySelector('.console-container') || document.body;
+  const el = document.querySelector('.header');
   let interval = null;
   let glitchEls = [];
 
@@ -9,7 +9,7 @@
     // Randomly create glitch bars
     if (Math.random() > 0.7) {
       const bar = document.createElement('div');
-      bar.className = 'glitch-bar';
+      bar.className = 'theme-effect glitch-bar';
       bar.style.position = 'fixed';
       bar.style.left = 0;
       bar.style.width = '100vw';
@@ -19,7 +19,7 @@
       bar.style.opacity = Math.random()*0.3+0.15;
       bar.style.zIndex = 9998;
       bar.style.pointerEvents = 'none';
-      document.body.appendChild(bar);
+      window.ProjLib.UI.effectLayer().appendChild(bar);
       glitchEls.push(bar);
       setTimeout(()=>{ bar.remove(); glitchEls = glitchEls.filter(item => item !== bar); }, 180+Math.random()*200);
     }

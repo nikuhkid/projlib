@@ -3,8 +3,18 @@
   'use strict';
   const ProjLib = window.ProjLib;
   let cleanup = null;
+  let effects;
 
   ProjLib.UI = {
+    effectLayer() {
+      if (!effects) {
+        effects = document.createElement('div');
+        effects.className = 'theme-effects';
+        effects.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(effects);
+      }
+      return effects;
+    },
     renderHub(hub) {
       hub.categories.forEach(category => {
         const select = document.getElementById(category.id);
@@ -32,14 +42,14 @@
         sheet.rel = 'stylesheet';
         document.head.appendChild(sheet);
       }
-      sheet.href = theme.css;
+      sheet.href = `${theme.css}?v=4`;
       document.getElementById('themeBtn').textContent = `Theme: ${theme.name.charAt(0).toUpperCase()}${theme.name.slice(1)}`;
 
       // Serialize in apps.js so a previous script cannot overwrite the cleanup hook.
       if (theme.js && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
-          script.src = theme.js;
+          script.src = `${theme.js}?v=4`;
           script.onload = () => { script.remove(); resolve(); };
           script.onerror = () => { script.remove(); reject(new Error(`Could not load the ${theme.name} theme.`)); };
           document.body.appendChild(script);

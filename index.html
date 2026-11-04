@@ -15,7 +15,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=4" />
 </head>
 <body>
   <div class="console-container">
@@ -25,25 +25,32 @@
       <h1 class="title">ProjLib Control Node [BETA]</h1>
       <div class="header-row">
         <div class="header-left">
-          <label class="switch">
-            <input type="checkbox" id="proxyToggle" data-needs-config disabled />
-            <span class="slider"></span>
-            <span class="label">Proxy Mode</span>
-          </label>
+          <span class="anime-emblem" role="img" aria-label="Naruto Hidden Leaf headband">
+            <svg viewBox="0 0 92 44" aria-hidden="true"><rect x="2" y="3" width="88" height="38" rx="8"/><circle cx="12" cy="14" r="2"/><circle cx="12" cy="30" r="2"/><circle cx="80" cy="14" r="2"/><circle cx="80" cy="30" r="2"/><path d="M56 13c-11-7-24-2-24 9 0 9 12 13 18 6 5-6-1-13-7-10-4 2-3 7 1 7m-11 3-8 7 1-11m28-9 10-7-4 15"/></svg>
+            <span>Hidden Leaf</span>
+          </span>
         </div>
         <div class="header-right">
-          <button id="scannerBtn" type="button" aria-controls="proxyForm" aria-expanded="true"><i class="ri-search-eye-line" aria-hidden="true"></i> Scanner</button>
+          <button id="scannerBtn" type="button" aria-controls="scannerPanel" aria-expanded="false"><i class="ri-search-eye-line" aria-hidden="true"></i> Scanner</button>
           <button id="themeBtn" type="button" disabled><i class="ri-paint-brush-line" aria-hidden="true"></i> Theme</button>
         </div>
       </div>
     </header>
 
     <!-- Address bar -->
-    <form id="proxyForm" class="scanner">
-      <label class="sr-only" for="urlInput">Website address</label>
-      <input type="text" id="urlInput" placeholder="Enter a website address, e.g. example.com" autocomplete="url" autocapitalize="none" spellcheck="false" required />
-      <button type="submit" data-needs-config disabled>Engage</button>
-    </form>
+    <div id="scannerPanel" class="scanner-panel" hidden>
+      <form id="proxyForm" class="scanner">
+        <label class="sr-only" for="urlInput">Website address</label>
+        <input type="text" id="urlInput" placeholder="Enter a website address, e.g. example.com" autocomplete="url" autocapitalize="none" spellcheck="false" required />
+        <button type="submit" data-needs-config disabled>Engage</button>
+      </form>
+      <label class="switch">
+        <input type="checkbox" id="proxyToggle" data-needs-config disabled />
+        <span class="slider"></span>
+        <span class="label">Proxy Mode</span>
+      </label>
+      <p id="connectionNote" class="connection-note">Direct Mode embeds websites that permit it. Enable Proxy Mode to route requests through ProjLib.</p>
+    </div>
 
     <!-- Dropdown selectors -->
     <div class="dropdowns-grid">
@@ -67,7 +74,6 @@
 
 
     <p id="statusMessage" role="status" aria-live="polite">Loading the site directory…</p>
-    <p id="connectionNote" class="connection-note">Proxy Mode routes pages through the ProjLib proxy. Some sites, sign-ins, and video players may require Open original.</p>
 
     <!-- Proxy iframe area -->
     <div id="proxyContainer">
@@ -96,13 +102,14 @@
         </div>
       </div>
     </div>
+    <footer id="viewerSources" class="viewer-sources" hidden><a id="sourceLink" target="_blank" rel="noopener noreferrer">Source and licences</a></footer>
 
   </div>
 
   <noscript><p>ProjLib needs JavaScript to load its directory and website viewer.</p></noscript>
   <script src="js/core.js" defer></script>
-  <script src="js/ui.js" defer></script>
+  <script src="js/ui.js?v=4" defer></script>
   <script src="js/browser-session.js?v=2" defer></script>
-  <script src="js/apps.js?v=3" defer></script>
+  <script src="js/apps.js?v=4" defer></script>
 </body>
 </html>

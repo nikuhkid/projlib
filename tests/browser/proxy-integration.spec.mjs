@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { enableProxy } from './enable-proxy.mjs';
 
 const hub = JSON.parse(await readFile('hubData.json', 'utf8'));
 let runtime;
@@ -31,6 +32,7 @@ test('browser executes real rewritten HTML, CSS, fetch, links, forms and redirec
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: false, defaultHome: 'https://example.com/', proxyBase } }));
   await page.goto('/projlib/');
+  await enableProxy(page);
   const frame = page.frameLocator('#proxyFrame');
   await expect(frame.locator('h1')).toHaveText('Proxy integration');
   await expect(frame.locator('#api')).toHaveText('Fetch stayed on the proxy');

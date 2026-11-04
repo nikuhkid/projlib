@@ -31,7 +31,7 @@
   // Random rotation between -45 and 45 degrees
   const rot = (Math.random() * 90 - 45).toFixed(1);
   img.style.transform = `rotate(${rot}deg)`;
-    document.body.appendChild(img);
+    window.ProjLib.UI.effectLayer().appendChild(img);
     setTimeout(() => { img.classList.add('fade-out'); setTimeout(()=> img.remove(), 900); }, 1800);
   }
 
