@@ -45,6 +45,11 @@ test('address validation, direct mode, cross-origin refresh, scanner and origina
   await page.getByRole('button', { name: 'Engage' }).click();
   await expect(page.locator('#statusMessage')).toHaveAttribute('data-error', 'true');
   await page.locator('#urlInput').fill('example.com/next?q=1#section');
+  await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {
+    source: document.getElementById('proxyFrame').contentWindow,
+    data: { type: 'projlib:navigation', url: 'https://example.com/late-update' }
+  })));
+  await expect(page.locator('#urlInput')).toHaveValue('example.com/next?q=1#section');
   await page.getByRole('button', { name: 'Engage' }).click();
   await expect(page.locator('#proxyFrame')).toHaveAttribute('src', 'https://proxy.example.net/proxy/https://example.com/next?q=1#section');
   await expect(page.locator('#openOriginal')).toHaveAttribute('href', 'https://example.com/next?q=1#section');

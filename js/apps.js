@@ -20,6 +20,7 @@
     let hub;
     let browser;
     let rewriteReady = false;
+    let addressEdited = false;
     scannerPanel.hidden = true;
     document.getElementById('scannerBtn').setAttribute('aria-expanded', 'false');
     const rewriteMode = () => toggle.checked && Boolean(hub?.rewriteProxy);
@@ -33,7 +34,7 @@
 
     function showTarget(url) {
       currentUrl = url;
-      input.value = url;
+      if (!addressEdited) input.value = url;
       original.href = url;
       original.hidden = false;
       if (openProxy) openProxy.hidden = !rewriteMode();
@@ -50,6 +51,7 @@
     function loadUrl(value) {
       try {
         const target = utils.normalizeUrl(value);
+        addressEdited = false;
         const note = document.getElementById('connectionNote');
         if (!toggle.checked) note.textContent = 'Direct Mode embeds websites that allow it. Enable Proxy Mode here when a website needs proxy routing.';
         else if (rewriteMode()) note.textContent = 'Proxy Mode renders websites in your browser. Sign-ins and site storage stay in this Chrome profile until you clear proxy browsing data. Website compatibility varies.';
@@ -131,6 +133,7 @@
         UI.status('The proxy could not retrieve this site. Try Open original.', true);
       }
     });
+    input.addEventListener('input', () => { addressEdited = true; });
     form.addEventListener('submit', event => { event.preventDefault(); loadUrl(input.value); });
     document.getElementById('scannerBtn').addEventListener('click', event => {
       scannerPanel.hidden = !scannerPanel.hidden;
