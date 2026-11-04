@@ -32,9 +32,9 @@
       input.value = url;
       original.href = url;
       original.hidden = false;
-      openProxy.hidden = !rewriteMode();
+      if (openProxy) openProxy.hidden = !rewriteMode();
       if (rewriteMode()) {
-        openProxy.href = `${new URL(hub.proxyBase).origin}/rewrite/#${new URLSearchParams({ url })}`;
+        if (openProxy) openProxy.href = `${new URL(hub.proxyBase).origin}/rewrite/#${new URLSearchParams({ url })}`;
         try { sessionStorage.setItem('projlib_rewrite_url', url); } catch { /* optional tab restoration */ }
       }
     }
