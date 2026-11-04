@@ -210,7 +210,7 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
   }
 }
 
-#openOriginal { color: inherit; padding: 6px 12px; align-self: center; }
+#openOriginal, #openProxy { color: inherit; padding: 6px 12px; align-self: center; }
 .kuromi-sprite, .comic-sprite { pointer-events: none; transition: opacity .5s, transform .5s; }
 .fade-out { opacity: 0 !important; transform: scale(.6) !important; }
 #statusMessage { font: 14px/1.5 system-ui, sans-serif; margin: 14px 0 4px; }

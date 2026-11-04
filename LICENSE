@@ -1,3 +1,9 @@
+The files under rewrite/ and scripts/build-rewrite.mjs are licensed under
+the GNU Affero General Public License version 3 only. See rewrite/LICENSE
+and rewrite/NOTICE.txt. Third-party components retain their own licences.
+
+The following terms apply to the rest of this project.
+
 All Rights Reserved.
 
 You may view and learn from this project and its contents.

@@ -1,0 +1,27 @@
+ProjLib rewriting component
+Copyright (C) 2026 Niku / nikuhkid
+Licensed under GNU AGPL version 3 only, without warranty.
+
+The AGPL component consists of rewrite/ and scripts/build-rewrite.mjs.
+The HTTP/WebSocket gateway is a separately deployed server program.
+Other ProjLib files retain the terms in the root LICENSE.
+
+Scramjet 1.1.0, Mercury Workshop and contributors
+Upstream source revision 57ba89e3ffaded81f43cc1597f2e863b15cca6f5
+https://github.com/MercuryWorkshop/scramjet
+Scramjet's distributed LICENSE is GNU AGPL version 3. Its package metadata
+declares MIT. This distribution follows the actual LICENSE file.
+
+Modified on 4 November 2026 for ProjLib. The build replaces the cookie and
+storage modules, makes response-cookie notifications asynchronous, persists
+response cookies, and preserves directory separators in encoded URLs.
+Readable adaptations and guarded build changes are in the source download.
+
+bare-mux 2.1.9, Copyright 2024 Mercury Workshop Inc., MIT licence
+tough-cookie 6.0.2, Copyright (c) 2015 Salesforce.com, Inc., BSD-3-Clause
+tldts and tldts-core, Copyright (c) 2017 Thomas Parisot, 2018 Remi Berson, MIT
+Their complete licence notices accompany the deployed files under vendor/.
+
+The source page links downloadable copies of this component, the build
+instructions, and the complete upstream Scramjet source, including the
+Rust/WebAssembly rewriter. No account is required for these downloads.

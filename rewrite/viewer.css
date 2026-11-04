@@ -1,0 +1,13 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; background: #111827; color: #d9e9f5; font: 14px system-ui, sans-serif; }
+nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px; }
+button, a { color: inherit; font: inherit; }
+button { border: 1px solid #59657c; border-radius: 5px; padding: 5px 10px; background: #202c40; cursor: pointer; }
+button:hover { background: #33465f; }
+button:focus-visible, a:focus-visible { outline: 2px solid #86d9ed; outline-offset: 2px; }
+a { margin-left: auto; font-size: 12px; }
+#notice { margin: 0; padding: 8px 12px; }
+#notice:empty { display: none; }
+#site { width: 100%; flex: 1; min-height: 0; border: 0; background: white; }
+[hidden] { display: none !important; }

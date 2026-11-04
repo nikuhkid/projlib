@@ -10,13 +10,16 @@
     const toggle = document.getElementById('proxyToggle');
     const overlay = document.getElementById('loadingOverlay');
     const original = document.getElementById('openOriginal');
+    const openProxy = document.getElementById('openProxy');
     const themeButton = document.getElementById('themeBtn');
     let currentUrl = '';
     let frameError = false;
     let loadTimer;
     let hub;
     let browser;
-    const remoteMode = () => toggle.checked && Boolean(hub?.browserSessions);
+    let rewriteReady = false;
+    const rewriteMode = () => toggle.checked && Boolean(hub?.rewriteProxy);
+    const remoteMode = () => toggle.checked && !hub?.rewriteProxy && Boolean(hub?.browserSessions);
 
     function stopLoading() {
       clearTimeout(loadTimer);
@@ -29,6 +32,11 @@
       input.value = url;
       original.href = url;
       original.hidden = false;
+      openProxy.hidden = !rewriteMode();
+      if (rewriteMode()) {
+        openProxy.href = `${new URL(hub.proxyBase).origin}/rewrite/#${new URLSearchParams({ url })}`;
+        try { sessionStorage.setItem('projlib_rewrite_url', url); } catch { /* optional tab restoration */ }
+      }
     }
 
     function loadUrl(value) {
@@ -44,12 +52,13 @@
           return;
         }
         browser?.hide();
+        frame.setAttribute('sandbox', `allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads${rewriteMode() ? ' allow-same-origin' : ''}`);
         let address = target;
         if (toggle.checked) {
           if (!hub.proxyBase) throw new Error('The proxy is not configured yet. Switch off Proxy Mode to open embeddable sites.');
           const endpoint = new URL(hub.proxyBase);
           if (endpoint.origin === location.origin) throw new Error('The proxy must use a separate origin from ProjLib.');
-          address = `${endpoint.origin}/proxy/${target}`;
+          address = rewriteMode() ? `${endpoint.origin}/rewrite/#${new URLSearchParams({ url: target })}` : `${endpoint.origin}/proxy/${target}`;
         } else if (location.protocol === 'https:' && target.startsWith('http:')) {
           throw new Error('HTTP sites need Proxy Mode on this HTTPS page.');
         }
@@ -61,7 +70,12 @@
         frame.setAttribute('aria-busy', 'true');
         overlay.hidden = false;
         UI.status(`Opening ${new URL(target).hostname} in ${toggle.checked ? 'Proxy' : 'Direct'} Mode…`);
-        frame.src = address;
+        if (rewriteMode() && rewriteReady) {
+          frame.contentWindow.postMessage({ type: 'projlib:rewrite-command', action: 'navigate', url: target }, new URL(hub.proxyBase).origin);
+        } else {
+          rewriteReady = false;
+          frame.src = address;
+        }
         loadTimer = setTimeout(() => {
           stopLoading();
           UI.status('This site is taking a while. Try Refresh or Open original.', true);
@@ -72,7 +86,7 @@
     }
 
     frame.addEventListener('load', () => {
-      if (!currentUrl || remoteMode()) return;
+      if (!currentUrl || remoteMode() || rewriteMode()) return;
       stopLoading();
       if (!frameError) UI.status('Frame opened. If the site is blank or refuses to connect, use Open original.');
     });
@@ -82,8 +96,22 @@
     });
     window.addEventListener('message', event => {
       if (event.source !== frame.contentWindow || !toggle.checked || remoteMode()) return;
-      if (event.data?.type === 'projlib:navigation') {
+      if (rewriteMode() && event.origin !== new URL(hub.proxyBase).origin) return;
+      if (rewriteMode() && event.data?.type === 'projlib:rewrite-ready') {
+        rewriteReady = true;
+      } else if (rewriteMode() && event.data?.type === 'projlib:rewrite-ended') {
+        rewriteReady = false;
+        stopLoading();
+        UI.status('Proxy browsing data cleared. Choose a website to start again.');
+      } else if (event.data?.type === 'projlib:navigation') {
         try { showTarget(utils.normalizeUrl(event.data.url)); } catch { /* invalid message */ }
+      } else if (rewriteMode() && event.data?.type === 'projlib:rewrite-loaded') {
+        stopLoading();
+        if (event.data.url) { try { showTarget(utils.normalizeUrl(event.data.url)); } catch { /* invalid message */ } }
+        UI.status('Website opened. Scrolling and typing run in this browser.');
+      } else if (rewriteMode() && event.data?.type === 'projlib:rewrite-error') {
+        stopLoading();
+        UI.status(event.data.message, true);
       } else if (event.data?.type === 'projlib:error') {
         frameError = true;
         stopLoading();
@@ -99,6 +127,7 @@
     document.getElementById('homeBtn').addEventListener('click', () => loadUrl(hub.defaultHome));
     document.getElementById('refreshBtn').addEventListener('click', () => {
       if (remoteMode() && browser?.session) browser.send({ type: 'reload' });
+      else if (rewriteMode() && rewriteReady && currentUrl) frame.contentWindow.postMessage({ type: 'projlib:rewrite-command', action: 'reload' }, new URL(hub.proxyBase).origin);
       else if (currentUrl) loadUrl(currentUrl);
     });
     document.getElementById('fullscreenBtn').addEventListener('click', async () => {
@@ -112,7 +141,7 @@
 
     try {
       hub = await data.loadHubData();
-      if (hub.browserSessions) {
+      if (hub.browserSessions && !hub.rewriteProxy) {
         browser = new window.ProjLib.BrowserSession({ base: hub.proxyBase,
           onState: state => {
             if (!remoteMode()) return;
@@ -125,6 +154,9 @@
           onEnd: message => { stopLoading(); UI.status(message); }
         });
         document.getElementById('connectionNote').textContent = 'Proxy Mode uses a private browser on Wolfie. Cookies last for this session; 20 minutes idle or one minute disconnected ends it. Use End session to sign out and clear it. On phones, tap Keyboard to type. Audio, uploads, downloads, and passkeys are unavailable.';
+      }
+      if (hub.rewriteProxy) {
+        document.getElementById('connectionNote').textContent = 'Proxy Mode renders websites in your browser. Sign-ins and site storage stay in this Chrome profile until you clear proxy browsing data. Website compatibility varies.';
       }
       UI.renderHub(hub);
       const preference = utils.storage.get('projlib_proxy_mode');
@@ -159,7 +191,11 @@
       await setTheme();
       document.querySelectorAll('[data-needs-config]').forEach(control => { control.disabled = false; });
       if (hub.proxyBase) {
-        loadUrl(hub.defaultHome);
+        let initialUrl = hub.defaultHome;
+        if (hub.rewriteProxy) {
+          try { initialUrl = sessionStorage.getItem('projlib_rewrite_url') || initialUrl; } catch { /* optional tab restoration */ }
+        }
+        loadUrl(initialUrl);
       } else {
         document.getElementById('connectionNote').textContent = 'Direct Mode embeds sites that allow it. Use Open original if a site will not open here. Proxy Mode is not available yet.';
         UI.status('Direct Mode is ready. Choose a site or enter a website address.');

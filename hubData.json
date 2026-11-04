@@ -1,6 +1,7 @@
 {
   "defaultHome": "https://archive.org",
   "proxyBase": "https://projlib-proxy.fabmigfarcos.workers.dev",
+  "rewriteProxy": true,
   "browserSessions": true,
   "themes": [
     { "name": "main", "css": "css/themes/main.css", "js": "js/themes/main.js" },

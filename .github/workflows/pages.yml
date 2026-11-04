@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npx playwright install chromium --only-shell
       - run: npm test
       - run: npm run test:browser -- --workers=2

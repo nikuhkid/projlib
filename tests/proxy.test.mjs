@@ -8,7 +8,7 @@ import worker, { validateTarget, proxyUrl, rewriteCss } from '../worker/index.js
 const origin = 'https://projlib-proxy.example.net';
 const requests = [];
 const runtime = new Miniflare(convertV4MiniflareOptions({
-  modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
+  modules: ['index.js', 'browser-relay.js', 'frame-protocol.js', 'rewrite-gateway.js', 'targets.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
   compatibilityDate: '2026-11-02',
   bindings: { FRONTEND_ORIGIN: 'https://nikuhkid.github.io' },
   outboundService: async request => {

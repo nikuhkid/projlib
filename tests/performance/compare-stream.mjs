@@ -31,7 +31,7 @@ try {
   for(const [label,Engine,Host] of [['local-before',OldEngine,OldHost],['local-after',BrowserEngine,RelayHost]]) {
     const key='local-performance-test-key-1234567890123456789';
     const runtime=new Miniflare(convertV4MiniflareOptions({
-      modules:['index.js','browser-relay.js','frame-protocol.js'].map(name=>({type:'ESModule',path:resolve('worker',name)})),
+      modules:['index.js','browser-relay.js','frame-protocol.js','rewrite-gateway.js','targets.js'].map(name=>({type:'ESModule',path:resolve('worker',name)})),
       compatibilityDate:'2026-11-02',port:0,
       durableObjects:{BROWSER_RELAY:{className:'BrowserRelay',useSQLite:true}},
       bindings:{FRONTEND_ORIGIN:'https://nikuhkid.github.io',BROWSER_HOST_KEY:key}

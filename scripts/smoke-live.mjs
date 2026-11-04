@@ -32,7 +32,14 @@ try {
   }
   await page.locator('#urlInput').fill('https://example.com/');
   await page.getByRole('button', { name: 'Engage' }).click();
-  if (config.browserSessions) {
+  if (config.rewriteProxy) {
+    const frameBody = page.frameLocator('#proxyFrame').frameLocator('#site').locator('body');
+    await expect(frameBody).toContainText(/documentation examples/i, { timeout: 45000 });
+    await page.locator('#refreshBtn').click();
+    await expect(frameBody).toContainText(/documentation examples/i);
+    await page.reload();
+    await expect(frameBody).toContainText(/documentation examples/i, { timeout: 45000 });
+  } else if (config.browserSessions) {
     const health = await page.request.get(`${config.proxyBase}/browser/health`);
     assert.equal((await health.json()).online, true);
     await expect(page.locator('#browserTabs')).toContainText('Example Domain', { timeout: 45000 });
@@ -58,10 +65,10 @@ try {
   await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 375, height: 812 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  if (config.browserSessions) await expect.poll(() => page.locator('#browserCanvas').evaluate(canvas => canvas.width)).toBeLessThanOrEqual(375);
+  if (!config.rewriteProxy && config.browserSessions) await expect.poll(() => page.locator('#browserCanvas').evaluate(canvas => canvas.width)).toBeLessThanOrEqual(375);
   await page.screenshot({ path: 'test-results/live-mobile.png', fullPage: true });
-  if (config.browserSessions) await page.getByRole('button', { name: 'End session', exact: true }).click();
-  console.log(JSON.stringify({ site, mode: config.browserSessions ? 'Private browser' : hasProxy ? 'Proxy' : 'Direct', proxy: config.proxyBase || null, publicPage: response.status(), workerHealth, embeddedPage: 'example.com (rendered)', pageErrors: errors, screenshots: ['test-results/live-desktop.png', 'test-results/live-mobile.png'] }, null, 2));
+  if (!config.rewriteProxy && config.browserSessions) await page.getByRole('button', { name: 'End session', exact: true }).click();
+  console.log(JSON.stringify({ site, mode: config.rewriteProxy ? 'Local rewriting' : config.browserSessions ? 'Private browser' : hasProxy ? 'Proxy' : 'Direct', proxy: config.proxyBase || null, publicPage: response.status(), workerHealth, embeddedPage: 'example.com (rendered)', pageErrors: errors, screenshots: ['test-results/live-desktop.png', 'test-results/live-mobile.png'] }, null, 2));
 } catch (error) {
   await mkdir('test-results', { recursive: true });
   if (page) {

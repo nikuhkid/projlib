@@ -38,7 +38,7 @@ test.beforeAll(async () => {
   });
   fixture.listen(0, '127.0.0.1'); await once(fixture, 'listening');
   runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js', 'rewrite-gateway.js', 'targets.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
     compatibilityDate: '2026-11-02', port: 0,
     durableObjects: { BROWSER_RELAY: { className: 'BrowserRelay', useSQLite: true } },
     bindings: { FRONTEND_ORIGIN: 'http://127.0.0.1:4173', BROWSER_HOST_KEY: KEY }
@@ -58,7 +58,7 @@ test.afterAll(async () => {
   if (fixture) await new Promise(resolve => fixture.close(resolve));
 });
 test.beforeEach(async ({ page }) => {
-  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: true, defaultHome: 'http://fixture.test/', proxyBase } }));
+  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: true, defaultHome: 'http://fixture.test/', proxyBase } }));
 });
 
 async function canvasPoint(page, x, y) {
@@ -111,7 +111,7 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   expect(engine.sessions.size).toBe(1);
   const secondContext = await browser.newContext();
   const second = await secondContext.newPage();
-  await second.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: true, defaultHome: 'http://fixture.test/account', proxyBase } }));
+  await second.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: true, defaultHome: 'http://fixture.test/account', proxyBase } }));
   await second.goto('http://127.0.0.1:4173/projlib/');
   await expect(second.locator('#browserTabs')).toContainText('Fixture sign in');
   await second.getByRole('button', { name: 'End session', exact: true }).click();

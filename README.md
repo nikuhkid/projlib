@@ -2,16 +2,18 @@
 
 ProjLib is a public, themed website directory and web-proxy console. Pick a site from one of six categories or enter an HTTP(S) address. The selected page opens inside the console. The original project name, directory, eight themes, and artwork are preserved.
 
-- **Proxy Mode:** a real, sandboxed Chromium browser on Wolfie opens the website at its original origin. ProjLib streams its view and sends your pointer/keyboard input through an encrypted Cloudflare relay. Each visitor gets a separate incognito context, including cookies and storage.
+- **Proxy Mode:** the rewriting viewer renders websites in the visitor's browser and relays HTTP/WebSocket traffic through Cloudflare. See [rewriting.md](docs/rewriting.md) for verification, compatibility limits and storage behavior. The separate rewriting component is AGPL-3.0-only, with downloadable source and dependency notices linked from the viewer.
 - **Direct Mode:** opens the destination directly in the iframe. Sites that forbid embedding will refuse to appear.
-- **Controls:** address bar (Scanner), Home, Refresh, Fullscreen, themes, Open original, browser tabs, Back/Forward, Keyboard, and End session.
-- **Public access:** no ProjLib account or visitor login. Destination websites still require their own normal sign-in. Theme/mode preferences use local storage; an unpredictable session capability uses tab-scoped session storage for reconnection. Website credentials and cookies stay in the remote browser context, never in ProjLib's repository or logs.
+- **Controls:** address bar (Scanner), Home, Refresh, Fullscreen, themes, Open original, Open proxy in tab, Back/Forward, and Clear browsing data. The remote-browser fallback also provides browser tabs, Keyboard, and End session.
+- **Public access:** no ProjLib account or visitor login. Destination websites require their own sign-in. Rewriting stores virtual website cookies and storage in the visitor's browser profile. Clear browsing data clears all proxied sites in that storage partition. Credentials are not written to the repository or application logs.
 
 The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projlib/>. The proxy runs separately on **Cloudflare Workers**: Pages serves static files and cannot run a proxy backend.
 
-The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. New visitors start in Proxy Mode; an existing saved Direct Mode preference is respected. Cloudflare authorization is only needed to administer deployments. Wolfie must have the browser host running for browser sessions to work.
+The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. New visitors start in Proxy Mode; an existing saved Direct Mode preference is respected. Cloudflare authorization is only needed to administer deployments. Rewriting runs through Cloudflare. The optional remote-browser fallback requires Wolfie's browser host.
 
 ## Browser sessions
+
+This section describes the previously published Wolfie browser, available when `rewriteProxy` is `false` and `browserSessions` is `true`.
 
 Website JavaScript, redirects, HTTPS/WSS, login forms, and cookies execute normally inside Chromium, under the website's own origin. Refresh, navigation, and a ProjLib page reload preserve the current session. Separate visitors cannot share cookies or storage. The backend does not use Wolfie's normal browser profile. TLS to the destination ends in Chromium; the local egress guard does not intercept HTTPS.
 
@@ -27,7 +29,7 @@ The browser uses its actual Chromium identity. No fixed Chrome version, false na
 
 ## Lightweight proxy fallback
 
-Setting `browserSessions` to `false` restores the original stateless HTML proxy, also retained at `/proxy/…` for regression tests and rollback.
+Setting both `rewriteProxy` and `browserSessions` to `false` restores the original stateless HTML proxy, also retained at `/proxy/…` for regression tests and rollback.
 
 The Worker handles public HTTP(S) destinations on standard ports. It rewrites HTML attributes, `srcset`, CSS URLs/imports, redirects, GET/POST forms, JavaScript fetch/XHR, and ordinary dynamically inserted links. It streams binary resources and forwards range requests.
 
@@ -40,7 +42,7 @@ That fallback excludes cookies and authorization headers, and uses an opaque san
 Requires Node.js 22 or newer and npm. From the repository root:
 
 ```sh
-npm ci
+npm ci --ignore-scripts
 npm run dev
 ```
 
@@ -60,7 +62,8 @@ For local proxy testing, set `proxyBase` in `hubData.json` to the origin Wrangle
 
 - `defaultHome`: the website Home opens.
 - `proxyBase`: the deployed Worker origin, without a `/proxy/` suffix. Proxy Mode is enabled by default when this is set. An empty value leaves Direct Mode available.
-- `browserSessions`: use the Wolfie browser backend when `true`, or the stateless HTML rewriting proxy when `false`.
+- `rewriteProxy`: use the local-rendering viewer when `true`. Publish the Worker assets before enabling this in Pages.
+- `browserSessions`: with rewriting disabled, use the Wolfie browser backend when `true`, or the stateless HTML proxy when `false`.
 - `categories`: the six dropdowns and their site names/URLs. The existing bookmarks are retained.
 - `themes`: the eight CSS/JavaScript theme pairs.
 

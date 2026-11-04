@@ -1,7 +1,10 @@
 // Public, stateless web proxy for ProjLib. No identity provider or visitor login.
 // It rewrites ordinary HTML/CSS navigation; it is not a VPN or a full browser emulator.
 import { browserRequest } from './browser-relay.js';
+import { rewriteRequest } from './rewrite-gateway.js';
+import { validateTarget } from './targets.js';
 export { BrowserRelay } from './browser-relay.js';
+export { validateTarget } from './targets.js';
 const PREFIX = '/proxy/';
 const UPSTREAM_REQUEST_HEADERS = [
   'accept', 'accept-language', 'content-type', 'range', 'if-none-match', 'if-modified-since',
@@ -9,21 +12,6 @@ const UPSTREAM_REQUEST_HEADERS = [
   // Forward the default browser hints only; do not invent a Chrome version or platform.
   'user-agent', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform'
 ];
-
-export function validateTarget(value, proxyOrigin) {
-  const target = new URL(value);
-  const host = target.hostname.toLowerCase().replace(/\.$/, '');
-  if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password) {
-    throw new Error('Only public HTTP and HTTPS addresses without credentials are supported.');
-  }
-  // The public proxy has no reason to connect to IP literals or local services.
-  if (!host.includes('.') || /^[\d.]+$/.test(host) || host.includes(':') ||
-      /(^|\.)(localhost|local|localdomain|internal|lan|home|invalid)$/.test(host) || host.endsWith('.home.arpa') ||
-      (target.port && !['80', '443'].includes(target.port)) || target.origin === proxyOrigin) {
-    throw new Error('Use a public website on its standard HTTP or HTTPS port.');
-  }
-  return target;
-}
 
 export function proxyUrl(value, base, origin) {
   if (!value || /^(#|data:|blob:|mailto:|tel:|javascript:|about:)/i.test(value.trim())) return value;
@@ -155,6 +143,7 @@ export default {
   async fetch(request, env) {
     const frontendOrigin = env.FRONTEND_ORIGIN || 'https://nikuhkid.github.io';
     const incoming = new URL(request.url);
+    if (incoming.pathname.startsWith('/rewrite/')) return rewriteRequest(request, env);
     if (incoming.pathname.startsWith('/browser/')) return browserRequest(request, env);
     if (incoming.pathname === '/health') {
       return Response.json({ service: 'projlib-proxy', status: 'ok' }, { headers: { 'access-control-allow-origin': '*', 'cache-control': 'no-store' } });

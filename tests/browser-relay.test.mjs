@@ -21,7 +21,7 @@ function inbox(socket) {
 
 test('relay authenticates the host, checks browser origin, assigns ownership, routes privately, and closes clients with the host', { timeout: 20000 }, async t => {
   const runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02',
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js', 'rewrite-gateway.js', 'targets.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02',
     durableObjects: { BROWSER_RELAY: { className: 'BrowserRelay', useSQLite: true } },
     bindings: { FRONTEND_ORIGIN: ORIGIN, BROWSER_HOST_KEY: KEY }
   }));

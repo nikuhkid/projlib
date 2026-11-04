@@ -5,6 +5,7 @@
   "compatibility_date": "2026-11-02",
   "workers_dev": true,
   "preview_urls": false,
+  "assets": { "directory": "../.local/rewrite-assets", "binding": "ASSETS", "run_worker_first": true },
   "durable_objects": { "bindings": [{ "name": "BROWSER_RELAY", "class_name": "BrowserRelay" }] },
   "migrations": [{ "tag": "browser-relay-v1", "new_sqlite_classes": ["BrowserRelay"] }],
   "vars": {

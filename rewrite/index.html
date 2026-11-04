@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ProjLib website viewer</title>
+  <link rel="stylesheet" href="/rewrite/viewer.css">
+  <script src="/rewrite/vendor/scramjet/scramjet.all.js" defer></script>
+  <script src="/rewrite/vendor/baremux/index.js" defer></script>
+  <script src="/rewrite/viewer.js" defer></script>
+</head>
+<body>
+  <nav aria-label="Website controls">
+    <button id="back" aria-label="Back">←</button>
+    <button id="forward" aria-label="Forward">→</button>
+    <button id="reload">Refresh</button>
+    <button id="clear">Clear browsing data</button>
+    <a id="source" href="/rewrite/source.html" target="_blank" rel="noopener noreferrer">Source and licences</a>
+  </nav>
+  <p id="notice" role="status">Starting the website viewer…</p>
+  <iframe id="site" title="Proxied website" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" allow="fullscreen" referrerpolicy="no-referrer" hidden></iframe>
+</body>
+</html>

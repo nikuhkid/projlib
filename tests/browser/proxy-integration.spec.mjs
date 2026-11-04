@@ -8,7 +8,7 @@ let runtime;
 let proxyBase;
 test.beforeAll(async () => {
   runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02', port: 0,
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js', 'rewrite-gateway.js', 'targets.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })), compatibilityDate: '2026-11-02', port: 0,
     bindings: { FRONTEND_ORIGIN: 'http://127.0.0.1:4173' },
     outboundService: async request => {
       const url = new URL(request.url);
@@ -29,7 +29,7 @@ test.afterAll(async () => { await runtime?.dispose(); });
 test('browser executes real rewritten HTML, CSS, fetch, links, forms and redirects inside the sandbox', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: false, defaultHome: 'https://example.com/', proxyBase } }));
+  await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: false, defaultHome: 'https://example.com/', proxyBase } }));
   await page.goto('/projlib/');
   const frame = page.frameLocator('#proxyFrame');
   await expect(frame.locator('h1')).toHaveText('Proxy integration');

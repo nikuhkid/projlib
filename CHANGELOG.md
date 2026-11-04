@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-04
+
+- Added local browser rendering through a pinned Scramjet rewriting component, with HTTP and WebSocket traffic relayed through the Cloudflare Worker.
+- Fixed cookie restoration, domain/path handling, response-cookie persistence, stylesheet notification deadlocks, storage clearing, and relative module imports in the integration.
+- Added Clear browsing data, a top-level proxy viewer link, and an AGPL source page with downloadable adaptations, complete upstream source, dependency notices and checksums.
+- Verified local rendering, fake-account login, refresh and service worker restoration, browser-profile isolation, modules, WebSockets, storage clearing and local interaction while offline. Real Instagram and ChatGPT account compatibility remains unverified.
+
 ## 2026-11-02
 
 - Reduced browser-stream overhead with binary JPEG transfer, bounded frame pipelining, Responsive/Sharper choices, scaled pointer mapping, and coalesced scrolling. Controlled slower-link measurements used 49% fewer bytes per frame and improved median frame cadence from 372 ms to 144 ms.

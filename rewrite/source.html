@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ProjLib rewriting source and licences</title>
+  <link rel="stylesheet" href="/rewrite/viewer.css">
+</head>
+<body style="height:auto;padding:24px;gap:12px;max-width:900px">
+  <h1>Rewriting source and licences</h1>
+  <p>The ProjLib rewriting component is licensed under GNU AGPL version 3 only, without warranty. These downloads contain the source used for the deployed viewer.</p>
+  <ul>
+    <li><a href="/rewrite/source/projlib-rewrite-source.tar.gz">ProjLib adaptations and build instructions</a></li>
+    <li><a href="/rewrite/source/scramjet-57ba89e.tar.gz">Complete upstream Scramjet source, including the WebAssembly rewriter</a></li>
+    <li><a href="/rewrite/LICENSE">GNU AGPL version 3</a></li>
+    <li><a href="/rewrite/NOTICE.txt">Dependency notices and modifications</a></li>
+    <li><a href="/rewrite/source/manifest.json">Source revision and checksums</a></li>
+    <li><a href="https://github.com/nikuhkid/projlib/tree/main/rewrite">Source repository</a></li>
+  </ul>
+  <p>Extract the adaptations archive and run <code>npm ci --ignore-scripts</code>, then <code>npm run build:rewrite</code> with Node.js 22 or later and tar available. The resulting browser assets are in <code>.local/rewrite-assets/</code>. The included README describes the source layout and upstream build.</p>
+</body>
+</html>
