@@ -8,6 +8,33 @@ test.beforeEach(async ({ page }) => {
   await page.route('https://example.com/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Direct fixture</h1>' }));
 });
 
+test('Scanner opens dotted hosts and sends search terms through the selected mode', async ({ page }) => {
+  await page.route('https://www.bing.com/search?*', route => route.fulfill({ contentType: 'text/html', body: '<h1>Search fixture</h1>' }));
+  await page.goto('/projlib/');
+  await expect(page.locator('#homeBtn')).toBeEnabled();
+  await page.locator('#scannerBtn').click();
+  const input = page.getByRole('textbox', { name: 'Search or enter a website address' });
+  const frame = page.locator('#proxyFrame');
+
+  await input.fill('example.com');
+  await input.press('Enter');
+  await expect(frame).toHaveAttribute('src', 'https://example.com/');
+
+  await input.fill('  facebook  ');
+  await input.press('Enter');
+  await expect(frame).toHaveAttribute('src', 'https://www.bing.com/search?q=facebook');
+  await expect(page.frameLocator('#proxyFrame').locator('h1')).toHaveText('Search fixture');
+
+  await page.locator('#proxyToggle').check();
+  await input.fill('facebook.com help & tips');
+  await input.press('Enter');
+  await expect(frame).toHaveAttribute('src', 'https://proxy.example.net/proxy/https://www.bing.com/search?q=facebook.com+help+%26+tips');
+
+  await input.fill('example.com:8443/path');
+  await input.press('Enter');
+  await expect(frame).toHaveAttribute('src', 'https://proxy.example.net/proxy/https://example.com:8443/path');
+});
+
 test('startup hides Scanner controls and keeps proxy off, including after a previously enabled visit', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

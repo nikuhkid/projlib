@@ -48,9 +48,9 @@
       }
     }
 
-    function loadUrl(value) {
+    function loadUrl(value, fromScanner = false) {
       try {
-        const target = utils.normalizeUrl(value);
+        const target = fromScanner ? utils.resolveScannerInput(value) : utils.normalizeUrl(value);
         addressEdited = false;
         const note = document.getElementById('connectionNote');
         if (!toggle.checked) note.textContent = 'Direct Mode embeds websites that allow it. Enable Proxy Mode here when a website needs proxy routing.';
@@ -134,7 +134,7 @@
       }
     });
     input.addEventListener('input', () => { addressEdited = true; });
-    form.addEventListener('submit', event => { event.preventDefault(); loadUrl(input.value); });
+    form.addEventListener('submit', event => { event.preventDefault(); loadUrl(input.value, true); });
     document.getElementById('scannerBtn').addEventListener('click', event => {
       scannerPanel.hidden = !scannerPanel.hidden;
       event.currentTarget.setAttribute('aria-expanded', String(!scannerPanel.hidden));
