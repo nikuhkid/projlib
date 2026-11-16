@@ -5,11 +5,12 @@ ProjLib is a public, themed website directory and web-proxy console. Pick a site
 - **Proxy Mode:** the rewriting viewer renders websites in the visitor's browser and relays HTTP/WebSocket traffic through Cloudflare. See [rewriting.md](docs/rewriting.md) for verification, compatibility limits and storage behavior. The separate rewriting component is AGPL-3.0-only, with downloadable source and dependency notices linked from the viewer.
 - **Direct Mode:** opens the destination directly in the iframe. Sites that forbid embedding will refuse to appear.
 - **Controls:** address bar (Scanner), Home, Refresh, Fullscreen, themes, Open original, Open proxy in tab, Back/Forward, and Clear browsing data. The remote-browser fallback also provides browser tabs, Keyboard, and End session.
-- **Public access:** no ProjLib account or visitor login. Destination websites require their own sign-in. Rewriting stores virtual website cookies and storage in the visitor's browser profile. Clear browsing data clears all proxied sites in that storage partition. Credentials are not written to the repository or application logs.
+- **Entrance:** complete Breach Protocol or use the existing access key before the console starts. Any Access Denied response redirects to Google after 1.5 seconds; there is no circuit fallback. The password is represented by its PBKDF2 verifier. See [access-gate.md](docs/access-gate.md).
+- **Website accounts:** destination websites require their own sign-in. Rewriting stores virtual website cookies and storage in the visitor's browser profile. Clear browsing data clears all proxied sites in that storage partition. Website credentials are not written to the repository or application logs.
 
 The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projlib/>. The proxy runs separately on **Cloudflare Workers**: Pages serves static files and cannot run a proxy backend.
 
-The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. Each page load starts in Direct Mode with Scanner closed. Scanner reveals the address bar and the unchecked Proxy Mode switch. Proxy routing is an explicit choice for that visit. Cloudflare authorization is only needed to administer deployments. Rewriting runs through Cloudflare. The optional remote-browser fallback requires Wolfie's browser host.
+The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. After the entrance is passed, the console starts in Direct Mode with Scanner closed. Scanner reveals the address bar and the unchecked Proxy Mode switch. Proxy routing is an explicit choice for that visit. Cloudflare authorization is only needed to administer deployments. Rewriting runs through Cloudflare. The optional remote-browser fallback requires Wolfie's browser host.
 
 ## Browser sessions
 

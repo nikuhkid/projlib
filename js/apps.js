@@ -216,5 +216,8 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', init, { once: true });
+  document.addEventListener('DOMContentLoaded', () => {
+    const access = window.ProjLibAccess?.ready;
+    if (access) access.then(init, () => {});
+  }, { once: true });
 })();

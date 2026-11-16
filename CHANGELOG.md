@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-16
+
+- Added the minimal twenty-matrix Breach Protocol entrance with the existing hashed-password bypass. The console initializes only after Access Granted finishes.
+- Any Access Denied result now redirects to Google after 1.5 seconds. There is no circuit fallback, reset/new-matrix control or gameplay guidance.
+- Updated browser checks to solve the displayed puzzle after navigation and reload, without stored passwords or fixed answer paths.
+
 ## 2026-11-04
 
 - Made Scanner controls hidden on startup and Proxy Mode opt-in on each page load. Moved the source offer below the website window.

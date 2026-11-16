@@ -16,9 +16,63 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/breach-gate.css?v=1" />
 </head>
-<body>
-  <div class="console-container">
+<body class="breach-locked">
+  <section id="breach-gate" aria-labelledby="breach-title">
+    <div class="breach-stages">
+    <div class="breach-shell">
+      <header class="breach-masthead">
+        <span>ACCESS TERMINAL <span class="breach-dim">// MATRIX EXPOSED</span></span>
+        <span class="breach-terminal-id">NET / 77.014</span>
+      </header>
+      <div class="breach-title-row">
+        <div><h1 id="breach-title">BREACH PROTOCOL</h1></div>
+      </div>
+      <div class="breach-telemetry">
+        <section class="breach-timer-box" aria-label="Breach timer">
+          <h2>BREACH TIME REMAINING</h2>
+          <div id="breach-timer" role="timer" aria-live="off">60.00</div>
+          <div class="breach-time-track"><div id="breach-time-bar"></div></div>
+        </section>
+        <section class="breach-buffer-box" aria-label="Selection buffer">
+          <div class="breach-panel-title"><h2>BUFFER</h2><span id="breach-buffer-count">00 / 14</span></div>
+          <div id="breach-buffer" aria-label="Selected hexadecimal codes"></div>
+        </section>
+      </div>
+      <div class="breach-game">
+        <section class="breach-matrix-panel" aria-labelledby="breach-matrix-title">
+          <div class="breach-panel-title"><h2 id="breach-matrix-title">CODE MATRIX</h2><span id="breach-axis">ROW 01</span></div>
+          <div id="breach-matrix" role="group" aria-label="Code matrix"></div>
+        </section>
+        <section class="breach-sequences-panel" aria-labelledby="breach-sequences-title">
+          <div class="breach-panel-title"><h2 id="breach-sequences-title">SEQUENCES REQUIRED TO UPLOAD</h2><span id="breach-complete-count">0 / 5</span></div>
+          <ol id="breach-sequences"></ol>
+        </section>
+      </div>
+      <div class="breach-password-zone">
+        <form id="breach-password-form">
+          <label class="breach-sr-only" for="breach-password">Page access password</label>
+          <input id="breach-password" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="256" placeholder="Enter access key" aria-describedby="breach-password-status">
+          <button id="breach-password-submit" type="submit">UNLOCK</button>
+          <p id="breach-password-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+      <footer class="breach-footer"><span>PROTOCOL / BREACH</span><span id="breach-footer-status">AWAITING INPUT</span><span>AUTHORIZATION REQUIRED</span></footer>
+    </div>
+    </div>
+    <section id="breach-outcome" role="status" aria-live="assertive" aria-atomic="true" tabindex="-1" hidden>
+      <div class="breach-outcome-frame">
+        <div class="breach-outcome-header"><span id="breach-outcome-protocol">BREACH PROTOCOL</span><span>ACCESS CONTROL</span></div>
+        <div class="breach-outcome-body">
+          <h2 id="breach-outcome-title"></h2>
+        </div>
+        <div class="breach-outcome-track" aria-hidden="true"><div></div></div>
+      </div>
+    </section>
+  </section>
+
+  <div class="console-container" data-breach-protected hidden inert>
 
     <!-- HEADER -->
     <header class="header">
@@ -107,9 +161,10 @@
   </div>
 
   <noscript><p>ProjLib needs JavaScript to load its directory and website viewer.</p></noscript>
+  <script src="js/access.js?v=1" defer></script>
   <script src="js/core.js?v=5" defer></script>
   <script src="js/ui.js?v=4" defer></script>
   <script src="js/browser-session.js?v=2" defer></script>
-  <script src="js/apps.js?v=5" defer></script>
+  <script src="js/apps.js?v=6" defer></script>
 </body>
 </html>

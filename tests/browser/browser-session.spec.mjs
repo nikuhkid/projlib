@@ -1,3 +1,4 @@
+import { unlockProjLib } from './access.mjs';
 import { test, expect } from '@playwright/test';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { readFile } from 'node:fs/promises';
@@ -83,6 +84,7 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   await page.setViewportSize({width:1800,height:1400});
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await enableProxy(page);
   await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
   await expect(page.locator('#browserTabs')).toContainText('Fixture sign in');
@@ -109,6 +111,7 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   await page.locator('#refreshBtn').click();
   await expect(remote.locator('h1')).toHaveText('Private account');
   await page.reload();
+  await unlockProjLib(page);
   await enableProxy(page);
   await expect(page.locator('#browserTabs')).toContainText('Private account');
   expect(engine.sessions.size).toBe(1);
@@ -116,6 +119,7 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   const second = await secondContext.newPage();
   await second.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: true, defaultHome: 'http://fixture.test/account', proxyBase } }));
   await second.goto('http://127.0.0.1:4173/projlib/');
+  await unlockProjLib(second);
   await enableProxy(second);
   await expect(second.locator('#browserTabs')).toContainText('Fixture sign in');
   await second.getByRole('button', { name: 'End session', exact: true }).click();
@@ -138,6 +142,7 @@ test('mouse clicks, drags, and coalesced scrolling reach a cross-origin frame at
   }));
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await enableProxy(page);
   await expect(page.locator('#browserCanvas')).toHaveAttribute('data-has-frame', 'true');
   const session = [...engine.sessions.values()][0];

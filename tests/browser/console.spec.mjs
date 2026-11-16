@@ -1,3 +1,4 @@
+import { unlockProjLib } from './access.mjs';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
@@ -11,6 +12,7 @@ test.beforeEach(async ({ page }) => {
 test('Scanner opens dotted hosts and sends search terms through the selected mode', async ({ page }) => {
   await page.route('https://www.bing.com/search?*', route => route.fulfill({ contentType: 'text/html', body: '<h1>Search fixture</h1>' }));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#homeBtn')).toBeEnabled();
   await page.locator('#scannerBtn').click();
   const input = page.getByRole('textbox', { name: 'Search or enter a website address' });
@@ -39,6 +41,7 @@ test('startup hides Scanner controls and keeps proxy off, including after a prev
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#proxyToggle')).not.toBeChecked();
   await expect(page.locator('#proxyToggle')).toBeHidden();
   await expect(page.locator('#proxyForm')).toBeHidden();
@@ -57,6 +60,7 @@ test('startup hides Scanner controls and keeps proxy off, including after a prev
   await expect(page.frameLocator('#proxyFrame').locator('h1')).toHaveText('Proxy fixture');
   await page.evaluate(() => localStorage.setItem('projlib_proxy_mode', 'proxy'));
   await page.reload();
+  await unlockProjLib(page);
   await expect(page.locator('#proxyForm')).toBeHidden();
   await expect(page.locator('#proxyToggle')).not.toBeChecked();
   await expect(page.frameLocator('#proxyFrame').locator('h1')).toHaveText('Direct fixture');
@@ -65,6 +69,7 @@ test('startup hides Scanner controls and keeps proxy off, including after a prev
 
 test('address validation, direct mode, cross-origin refresh, scanner and original link work', async ({ page }) => {
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#homeBtn')).toBeEnabled();
   await page.locator('#scannerBtn').click();
   await page.locator('#proxyToggle').check();
@@ -94,6 +99,7 @@ test('every theme loads, cleans up, and persists across reloads', async ({ page 
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('body')).toHaveClass(/theme-main/);
   for (const theme of hub.themes.slice(1)) {
     await page.locator('#themeBtn').click();
@@ -102,6 +108,7 @@ test('every theme loads, cleans up, and persists across reloads', async ({ page 
   }
   await expect(page.locator('.matrix-char, .kuromi-sprite, .cp-overlay, .glitch-bar')).toHaveCount(0);
   await page.reload();
+  await unlockProjLib(page);
   await expect(page.locator('body')).toHaveClass('theme-minimal');
   expect(errors).toEqual([]);
 });
@@ -109,6 +116,7 @@ test('every theme loads, cleans up, and persists across reloads', async ({ page 
 test('blocked browser storage does not prevent anonymous startup', async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage blocked', 'SecurityError'); } }));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#homeBtn')).toBeEnabled();
   await expect(page.frameLocator('#proxyFrame').locator('h1')).toHaveText('Direct fixture');
 });
@@ -116,6 +124,7 @@ test('blocked browser storage does not prevent anonymous startup', async ({ page
 test('configuration failures are visible and leave navigation disabled', async ({ page }) => {
   await page.route('**/hubData.json', route => route.fulfill({ status: 503, body: 'Unavailable' }));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#statusMessage')).toContainText('HTTP 503');
   await expect(page.locator('#homeBtn')).toBeDisabled();
 });
@@ -123,6 +132,7 @@ test('configuration failures are visible and leave navigation disabled', async (
 test('without a deployed proxy the console stays in Direct Mode and explains the unavailable switch', async ({ page }) => {
   await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, browserSessions: false, proxyBase: '' } }));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#homeBtn')).toBeEnabled();
   await expect(page.locator('#proxyFrame')).toBeHidden();
   await expect(page.locator('#proxyToggle')).not.toBeChecked();
@@ -139,12 +149,14 @@ test('without a deployed proxy the console stays in Direct Mode and explains the
 test('console fits a narrow mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#homeBtn')).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 test('theme effects cannot paint over the website or filter its container', async ({ page }) => {
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.frameLocator('#proxyFrame').locator('h1')).toHaveText('Direct fixture');
   for (const name of ['kuromi', 'matrix', 'glitch', 'cyberpunk', 'anime']) {
     await page.evaluate(async name => {
@@ -170,6 +182,7 @@ test('theme effects cannot paint over the website or filter its container', asyn
 
 test('Anime has seven distinct Dragon Balls and a Hidden Leaf headband; Cyberpunk styles the real controls', async ({ page }) => {
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await expect(page.locator('#themeBtn')).toBeEnabled();
   await page.evaluate(() => window.ProjLib.UI.applyTheme(window.ProjLib.data.hub.themes.find(theme => theme.name === 'anime')));
   await expect(page.getByRole('img', { name: 'Naruto Hidden Leaf headband' })).toBeVisible();

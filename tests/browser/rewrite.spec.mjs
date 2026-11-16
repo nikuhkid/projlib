@@ -1,3 +1,4 @@
+import { unlockProjLib } from './access.mjs';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createRewriteRuntime } from '../rewrite-runtime.mjs';
@@ -21,6 +22,7 @@ async function openFixture(page) {
     ...hub, browserSessions: false, rewriteProxy: true, defaultHome: 'https://fixture.test/', proxyBase
   } }));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await enableProxy(page);
   return page.frameLocator('#proxyFrame').frameLocator('#site');
 }
@@ -66,6 +68,7 @@ test('rewriting renders locally with modules, fetch, native identity, WebSockets
   await debug.send('ServiceWorker.stopAllWorkers');
   await debug.detach();
   await page.reload();
+  await unlockProjLib(page);
   await expect(page.locator('#proxyToggle')).not.toBeChecked();
   await enableProxy(page);
   await expect(site.locator('h1')).toHaveText('Private fixture account');
@@ -107,6 +110,7 @@ test('clearing proxy data removes its cookies and local storage', async ({ page 
   await page.frameLocator('#proxyFrame').getByRole('button', { name: 'Clear browsing data' }).click();
   await expect(page.frameLocator('#proxyFrame').locator('body')).toContainText('Proxy browsing data cleared');
   await page.reload();
+  await unlockProjLib(page);
   await enableProxy(page);
   await expect(site.locator('h1')).toHaveText('Fixture sign in');
   await expect(site.locator('#storage')).toHaveText('empty');

@@ -1,3 +1,4 @@
+import { unlockProjLib } from './access.mjs';
 import { test, expect } from '@playwright/test';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { readFile } from 'node:fs/promises';
@@ -32,6 +33,7 @@ test('browser executes real rewritten HTML, CSS, fetch, links, forms and redirec
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: false, defaultHome: 'https://example.com/', proxyBase } }));
   await page.goto('/projlib/');
+  await unlockProjLib(page);
   await enableProxy(page);
   const frame = page.frameLocator('#proxyFrame');
   await expect(frame.locator('h1')).toHaveText('Proxy integration');
