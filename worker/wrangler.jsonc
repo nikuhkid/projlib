@@ -9,7 +9,8 @@
   "durable_objects": { "bindings": [{ "name": "BROWSER_RELAY", "class_name": "BrowserRelay" }] },
   "migrations": [{ "tag": "browser-relay-v1", "new_sqlite_classes": ["BrowserRelay"] }],
   "vars": {
-    "FRONTEND_ORIGIN": "https://nikuhkid.github.io"
+    "FRONTEND_ORIGIN": "https://nikuhkid.github.io",
+    "HOME_PROXY_ORIGIN": "https://nikuhkid.ddns.net:8443"
   },
   "observability": { "enabled": false }
 }

@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ProjLib Host</title>
+<style>body{font:16px system-ui;background:#111827;color:#eef2ff;max-width:680px;margin:40px auto;padding:0 20px}input,button{font:inherit;padding:10px;margin:5px 0}input{display:block;width:90%}button{cursor:pointer}pre{white-space:pre-wrap}label{display:block;margin-top:14px}</style>
+<h1>ProjLib Host</h1><p>Set the password used to unlock Wolfie in ProjLib for 12 hours.</p>
+<form id="password"><label>Host password<input name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required></label><label>Confirm password<input name="confirm" type="password" autocomplete="new-password" required></label><button>Save password</button></form>
+<p>Saving a password ends existing home sessions.</p><button id="start">Start home proxy</button> <button id="stop">Stop home proxy</button><pre id="status" role="status">Loading...</pre>
+<script>
+let csrf;
+const status=document.getElementById('status');
+async function update(){const result=await(await fetch('/status')).json();csrf=result.csrf;status.textContent=result.error||(result.running?'Home proxy running. Verify this host password in ProjLib.':'Home proxy stopped.');document.getElementById('start').disabled=!result.passwordSet||result.running;}
+async function action(path,value={}){const response=await fetch(path,{method:'POST',headers:{'content-type':'application/json','x-projlib-control':csrf},body:JSON.stringify(value)});const result=await response.json();if(!response.ok)throw Error(result.error);await update();}
+document.getElementById('password').onsubmit=async event=>{event.preventDefault();const form=event.currentTarget;if(form.password.value!==form.confirm.value){status.textContent='The passwords do not match.';return;}try{await action('/password',{password:form.password.value});form.reset();status.textContent='Password saved. Existing home sessions ended.';}catch(error){status.textContent=error.message;}};
+document.getElementById('start').onclick=()=>action('/start').catch(error=>status.textContent=error.message);
+document.getElementById('stop').onclick=()=>action('/stop').catch(error=>status.textContent=error.message);
+update().catch(error=>status.textContent=error.message);
+</script></html>

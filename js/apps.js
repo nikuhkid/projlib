@@ -21,6 +21,7 @@
     let browser;
     let rewriteReady = false;
     let addressEdited = false;
+    let homeRouting;
     scannerPanel.hidden = true;
     document.getElementById('scannerBtn').setAttribute('aria-expanded', 'false');
     const rewriteMode = () => toggle.checked && Boolean(hub?.rewriteProxy);
@@ -33,6 +34,7 @@
     }
 
     function showTarget(url) {
+      homeRouting?.show(rewriteMode());
       currentUrl = url;
       if (!addressEdited) input.value = url;
       original.href = url;
@@ -114,6 +116,7 @@
       if (rewriteMode() && event.origin !== new URL(hub.proxyBase).origin) return;
       if (rewriteMode() && event.data?.type === 'projlib:rewrite-ready') {
         rewriteReady = true;
+        homeRouting?.ready();
       } else if (rewriteMode() && event.data?.type === 'projlib:rewrite-ended') {
         rewriteReady = false;
         stopLoading();
@@ -157,6 +160,7 @@
 
     try {
       hub = await data.loadHubData();
+      if (hub.rewriteProxy && hub.proxyBase) homeRouting = new window.ProjLib.HomeRouting({ frame, origin: new URL(hub.proxyBase).origin });
       if (hub.browserSessions && !hub.rewriteProxy) {
         browser = new window.ProjLib.BrowserSession({ base: hub.proxyBase,
           onState: state => {

@@ -41,7 +41,7 @@
       });
     }
     const connection = new BareMux.BareMuxConnection('/rewrite/vendor/baremux/worker.js');
-    await connection.setTransport('/rewrite/transport.mjs', [location.origin + '/rewrite']);
+    await connection.setTransport('/rewrite/transport.mjs?v=2', [location.origin + '/rewrite']);
     frame = controller.createFrame(element);
     const navigate = value => {
       try {
@@ -52,6 +52,33 @@
         frame.go(url);
       } catch (error) { fail(error); }
     };
+    let homeExpiry;
+    let homePoll;
+    let homeState = { configured: false, authorized: false, route: 'cloudflare', expiresAt: 0 };
+    async function homeControl(action, data = {}) {
+      try {
+        const method = action === 'status' ? 'GET' : 'POST';
+        const response = await fetch('/rewrite/home/' + action, { method, credentials: 'include',
+          headers: method === 'POST' ? { 'content-type': 'application/json' } : {},
+          body: method === 'POST' ? JSON.stringify(data) : undefined });
+        let state = await response.json();
+        if (!response.ok) throw new Error(state.error || 'The host could not be verified.');
+        if (action === 'login') {
+          const check = await fetch('/rewrite/home/status', { credentials: 'include' });
+          state = await check.json();
+          if (!check.ok || !state.authorized) throw new Error('This browser did not retain the host verification. Check its cookie policy or open the proxy in its own tab.');
+        }
+        homeState = { ...homeState, ...state };
+        state = homeState;
+        send('projlib:home-state', { state });
+        clearTimeout(homeExpiry); clearTimeout(homePoll);
+        if (state.authorized && state.expiresAt > Date.now()) {
+          homeExpiry = setTimeout(() => homeControl('status'), Math.max(1, state.expiresAt - Date.now()));
+          homePoll = setTimeout(() => homeControl('status'), 60000);
+        }
+        if (state.unavailable) homePoll = setTimeout(() => homeControl('status'), 60000);
+      } catch (error) { send('projlib:home-error', { message: error.message }); }
+    }
     element.addEventListener('load', () => {
       if (element.hidden) return;
       try {
@@ -76,6 +103,10 @@
       if (event.source !== parent || event.origin !== frontend || event.data?.type !== 'projlib:rewrite-command') return;
       if (event.data.action === 'reload') frame.reload();
       if (event.data.action === 'navigate') navigate(event.data.url);
+      if (event.data.action === 'home-status') homeControl('status');
+      if (event.data.action === 'home-login') homeControl('login', { password: event.data.password });
+      if (event.data.action === 'home-route') homeControl('route', { route: event.data.route });
+      if (event.data.action === 'home-logout') homeControl('logout');
     });
     // Clearing the entire proxy origin also clears its service worker's in-memory cookie jar.
     document.getElementById('clear').onclick = () => {

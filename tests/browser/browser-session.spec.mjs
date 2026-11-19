@@ -40,10 +40,10 @@ test.beforeAll(async () => {
   });
   fixture.listen(0, '127.0.0.1'); await once(fixture, 'listening');
   runtime = new Miniflare(convertV4MiniflareOptions({
-    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js', 'rewrite-gateway.js', 'targets.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
+    modules: ['index.js', 'browser-relay.js', 'frame-protocol.js', 'rewrite-gateway.js', 'home-proxy.js', 'targets.js'].map(name => ({ type: 'ESModule', path: resolve('worker', name) })),
     compatibilityDate: '2026-11-02', port: 0,
     durableObjects: { BROWSER_RELAY: { className: 'BrowserRelay', useSQLite: true } },
-    bindings: { FRONTEND_ORIGIN: 'http://127.0.0.1:4173', BROWSER_HOST_KEY: KEY }
+    bindings: { FRONTEND_ORIGIN: process.env.PROJLIB_TEST_ORIGIN || 'http://127.0.0.1:4173', BROWSER_HOST_KEY: KEY }
   }));
   proxyBase = (await runtime.ready).origin;
   engine = new BrowserEngine({ guardFactory: () => createNetworkGuard({
@@ -118,7 +118,7 @@ test('canvas input signs into a real browser, refresh/resume keep cookies, visit
   const secondContext = await browser.newContext();
   const second = await secondContext.newPage();
   await second.route('**/hubData.json', route => route.fulfill({ json: { ...hub, rewriteProxy: false, browserSessions: true, defaultHome: 'http://fixture.test/account', proxyBase } }));
-  await second.goto('http://127.0.0.1:4173/projlib/');
+  await second.goto((process.env.PROJLIB_TEST_ORIGIN || 'http://127.0.0.1:4173') + '/projlib/');
   await unlockProjLib(second);
   await enableProxy(second);
   await expect(second.locator('#browserTabs')).toContainText('Fixture sign in');

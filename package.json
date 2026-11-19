@@ -14,6 +14,9 @@
     "browser:init": "node server/start.mjs --init",
     "browser:host": "node server/start.mjs",
     "browser:stop": "node server/start.mjs --stop",
+    "home:host": "node server/home-host.mjs",
+    "home:build": "node scripts/build-home-host.mjs",
+    "home:pair": "node scripts/pair-home-host.mjs",
     "worker:dev": "npm run build:rewrite && wrangler dev --config worker/wrangler.jsonc",
     "worker:deploy": "npm run build:rewrite && wrangler deploy --config worker/wrangler.jsonc"
   },

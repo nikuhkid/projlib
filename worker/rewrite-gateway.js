@@ -1,4 +1,5 @@
 import { validateTarget } from './targets.js';
+import { homeControl, withHomeTransport } from './home-proxy.js';
 
 const MAX_BODY = 16 * 1024 * 1024;
 const MAX_META = 60000;
@@ -131,6 +132,7 @@ function proxySocket(origin) {
 export async function rewriteRequest(request, env) {
   const url = new URL(request.url);
   const frontend = env.FRONTEND_ORIGIN || 'https://nikuhkid.github.io';
+  if (url.pathname.startsWith('/rewrite/home/')) return homeControl(request, env);
   if (url.pathname === '/rewrite/clear') return new Response('<!doctype html><meta charset="utf-8"><title>ProjLib browsing data cleared</title><p>Proxy browsing data cleared for this Chrome profile. Refresh ProjLib to start again.</p>', { headers: {
     'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
     'clear-site-data': '"storage", "cache", "cookies"', 'content-security-policy': `frame-ancestors ${frontend} 'self'`
@@ -139,9 +141,15 @@ export async function rewriteRequest(request, env) {
   if (url.pathname === '/rewrite/fetch' || url.pathname === '/rewrite/socket') {
     if (request.headers.get('origin') !== url.origin) return failure('Open the transport from the ProjLib rewriting viewer.', 403);
     try {
-      if (url.pathname === '/rewrite/fetch') return await proxyFetch(request, url.origin);
+      if (url.pathname === '/rewrite/fetch') {
+        // Keep the upload available when an expired grant is rejected before egress.
+        const body = await readUpload(request.body);
+        if (!body) return failure('Uploads are limited to 16 MiB.', 413);
+        const init = { method: request.method, headers: request.headers, body: body.length ? body : undefined };
+        return await withHomeTransport(new Request(request.url, init), env, () => proxyFetch(new Request(request.url, init), url.origin));
+      }
       if (request.headers.get('upgrade')?.toLowerCase() !== 'websocket') return failure('WebSocket upgrade required.', 426);
-      return proxySocket(url.origin);
+      return await withHomeTransport(request, env, () => proxySocket(url.origin));
     } catch { return failure('The destination is invalid, unavailable, or took too long to respond.', 502); }
   }
   if (!env.ASSETS) return failure('Rewriting assets are not installed.', 503);

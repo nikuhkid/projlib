@@ -228,6 +228,11 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
 .connection-note { font: 12px/1.5 system-ui, sans-serif; color: #aaa; margin: 0 0 12px; }
 #proxyContainer:fullscreen { width: 100vw; height: 100vh; border: 0; border-radius: 0; }
 .browser-view { height: 100%; display: flex; flex-direction: column; font: 14px system-ui, sans-serif; }
+.home-routing { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 10px; }
+.home-routing form { display: flex; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.home-routing input { min-width: 0; max-width: 100%; }
+.home-routing select { max-width: 100%; }
+.home-routing p { width: 100%; margin: 0; font: 13px/1.5 system-ui, sans-serif; }
 .browser-tools { display: flex; align-items: center; gap: 4px; padding: 5px; background: #222; flex-wrap: wrap; }
 .browser-tools button, .browser-tools select { border: 1px solid #666; border-radius: 4px; background: #333; color: #eee; padding: 5px 8px; font: inherit; }
 .browser-tabs { display: flex; flex: 1; min-width: 80px; overflow-x: auto; gap: 4px; }

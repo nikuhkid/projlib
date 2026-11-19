@@ -9,7 +9,7 @@ export default class WorkerTransport {
     // Fetch upload streams require HTTP/2, and a service-worker redirect may replay a form body.
     const payload = body instanceof ReadableStream ? await new Response(body).arrayBuffer() : body;
     const response = await fetch(`${this.base}/fetch`, {
-      method: 'POST', credentials: 'omit', redirect: 'error', signal,
+      method: 'POST', credentials: 'include', redirect: 'error', signal,
       headers: { 'x-projlib-request': encodeURIComponent(JSON.stringify({ url: remote.href, method, headers })) },
       body: payload
     });

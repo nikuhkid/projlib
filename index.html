@@ -15,7 +15,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
   <link rel="stylesheet" href="css/breach-gate.css?v=1" />
 </head>
 <body class="breach-locked">
@@ -104,6 +104,17 @@
         <span class="label">Proxy Mode</span>
       </label>
       <p id="connectionNote" class="connection-note">Direct Mode embeds websites that permit it. Enable Proxy Mode to route requests through ProjLib.</p>
+      <section id="homeRouting" class="home-routing" aria-label="Proxy connection" hidden>
+        <label for="proxyRoute">Connection</label>
+        <select id="proxyRoute"><option value="cloudflare">Cloudflare</option><option value="home" disabled>Wolfie · home connection</option></select>
+        <form id="homeUnlockForm">
+          <label class="sr-only" for="hostPassword">Host password</label>
+          <input id="hostPassword" type="password" autocomplete="off" maxlength="256" placeholder="Host password" required>
+          <button id="verifyHost" type="submit" disabled>Verify host</button>
+        </form>
+        <button id="forgetHost" type="button" hidden>Forget verification</button>
+        <p id="homeRoutingStatus" role="status"></p>
+      </section>
     </div>
 
     <!-- Dropdown selectors -->
@@ -165,6 +176,7 @@
   <script src="js/core.js?v=5" defer></script>
   <script src="js/ui.js?v=4" defer></script>
   <script src="js/browser-session.js?v=2" defer></script>
-  <script src="js/apps.js?v=6" defer></script>
+  <script src="js/home-routing.js?v=1" defer></script>
+  <script src="js/apps.js?v=7" defer></script>
 </body>
 </html>

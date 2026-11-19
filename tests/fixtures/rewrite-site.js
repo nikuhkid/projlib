@@ -1,13 +1,38 @@
+let homeExpires = 0;
 export default {
   async fetch(request) {
     const url = new URL(request.url);
+    if (url.hostname === 'home.test') {
+      if (request.headers.get('x-projlib-bridge') !== 'fixture-bridge') return new Response('Bridge required', { status: 403 });
+      if (url.pathname === '/auth/login') {
+        if ((await request.json()).password !== 'fixture-password') return Response.json({ error: 'Incorrect host password.' }, { status: 401 });
+        homeExpires = Date.now() + 43200000;
+        return Response.json({ token: 'fixture.token', expiresAt: homeExpires });
+      }
+      if (request.headers.get('x-projlib-home-session') !== 'fixture.token' || homeExpires <= Date.now()) return new Response('Expired', { status: 401 });
+      if (url.pathname === '/auth/status') return Response.json({ expiresAt: homeExpires });
+      if (url.pathname === '/socket') {
+        const pair = new WebSocketPair();
+        pair[1].accept();
+        let opened = false;
+        pair[1].addEventListener('message', event => {
+          if (!opened) { opened = true; pair[1].send(JSON.stringify({ type: 'open', protocol: JSON.parse(event.data).protocols?.[0] || '' })); }
+          else pair[1].send(event.data);
+        });
+        return new Response(null, { status: 101, webSocket: pair[0] });
+      }
+      const metadata = JSON.parse(decodeURIComponent(request.headers.get('x-projlib-request')));
+      return Response.json({ egress: 'home', method: metadata.method, body: await request.text() }, { headers: {
+        'x-projlib-response': encodeURIComponent(JSON.stringify({ status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' } }))
+      } });
+    }
     if (request.headers.get('upgrade') === 'websocket') {
       const pair = new WebSocketPair();
       pair[1].accept();
       pair[1].addEventListener('message', event => pair[1].send(event.data));
       return new Response(null, { status: 101, webSocket: pair[0], headers: { 'sec-websocket-protocol': request.headers.get('sec-websocket-protocol') || '' } });
     }
-    if (url.pathname === '/api') return Response.json({ message: 'Dynamic fetch worked', cookie: request.headers.get('cookie') || '', auth: request.headers.get('authorization'), userAgent: request.headers.get('user-agent') });
+    if (url.pathname === '/api') return Response.json({ message: 'Dynamic fetch worked', cookie: request.headers.get('cookie') || '', auth: request.headers.get('authorization'), userAgent: request.headers.get('user-agent'), ...(request.method === 'POST' ? { body: await request.text() } : {}) });
     if (url.pathname === '/login' && request.method === 'POST') {
       return new Response(null, { status: 303, headers: { location: '/account', 'set-cookie': 'session=fixture; HttpOnly; Secure; Path=/' } });
     }
