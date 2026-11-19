@@ -4,7 +4,7 @@ The Cloudflare proxy is available without home verification. Scanner exposes a s
 
 The host stores a salted scrypt password verifier. It issues HMAC-signed grants with a twelve-hour lifetime and checks them before each HTTP request and WebSocket connection. Active home connections end at the deadline. Changing the host password rotates the signing key and ends existing home connections. Forget verification clears the current browser's grant. Clear browsing data also clears verification.
 
-The browser receives a Secure, HttpOnly, partitioned cookie from the rewriting gateway. The password is not retained by the page or stored in localStorage. The separate Breach Protocol entrance continues to control presentation. It does not authorize home egress.
+The browser receives a Secure, HttpOnly, partitioned cookie from the rewriting gateway. The embedded ProjLib viewer and the standalone proxy tab have their own cookie partitions and can each be verified through their connection controls. The password is not retained by the page or stored in localStorage. The separate Breach Protocol entrance continues to control presentation. It does not authorize home egress.
 
 The route is Chrome to the existing Cloudflare Worker, then Wolfie, then the destination. Chrome executes and renders websites. The host pins validated public DNS addresses, rejects private destinations and the gateway itself, preserves virtual site headers and cookies, and streams responses. The Cloudflare-to-host pairing key is separate from the user-defined password and is excluded from destination requests.
 

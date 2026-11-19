@@ -55,6 +55,20 @@
     let homeExpiry;
     let homePoll;
     let homeState = { configured: false, authorized: false, route: 'cloudflare', expiresAt: 0 };
+    const standaloneHome = document.getElementById('homeControls');
+    function renderHome(state, message) {
+      if (parent !== window) return;
+      standaloneHome.hidden = false;
+      const authorized = state.authorized && state.expiresAt > Date.now();
+      const selection = document.getElementById('homeRoute');
+      selection.querySelector('[value="home"]').disabled = !authorized;
+      selection.value = authorized && state.route === 'home' ? 'home' : 'cloudflare';
+      document.getElementById('homeVerify').disabled = !state.configured;
+      document.getElementById('homeForget').hidden = !authorized;
+      document.getElementById('homeStatus').textContent = message || (!state.configured ? 'The home host is not connected yet. Cloudflare is available.' : authorized
+        ? `Wolfie verified until ${new Date(state.expiresAt).toLocaleString()}.`
+        : state.unavailable ? 'Wolfie is unavailable. Cloudflare is available.' : 'Verify the host password to use Wolfie for 12 hours.');
+    }
     async function homeControl(action, data = {}) {
       try {
         const method = action === 'status' ? 'GET' : 'POST';
@@ -70,6 +84,7 @@
         }
         homeState = { ...homeState, ...state };
         state = homeState;
+        renderHome(state);
         send('projlib:home-state', { state });
         clearTimeout(homeExpiry); clearTimeout(homePoll);
         if (state.authorized && state.expiresAt > Date.now()) {
@@ -77,7 +92,17 @@
           homePoll = setTimeout(() => homeControl('status'), 60000);
         }
         if (state.unavailable) homePoll = setTimeout(() => homeControl('status'), 60000);
-      } catch (error) { send('projlib:home-error', { message: error.message }); }
+      } catch (error) { renderHome(homeState, error.message); send('projlib:home-error', { message: error.message }); }
+    }
+    if (parent === window) {
+      document.getElementById('homeForm').onsubmit = event => {
+        event.preventDefault();
+        const field = document.getElementById('homePassword');
+        homeControl('login', { password: field.value }); field.value = '';
+      };
+      document.getElementById('homeRoute').onchange = event => homeControl('route', { route: event.target.value });
+      document.getElementById('homeForget').onclick = () => homeControl('logout');
+      homeControl('status');
     }
     element.addEventListener('load', () => {
       if (element.hidden) return;

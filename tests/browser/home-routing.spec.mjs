@@ -64,3 +64,16 @@ test('the local host panel saves the password without opening the network listen
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('the standalone proxy tab can verify and forget its own host session', async ({ page }) => {
+  await page.goto(proxyBase + '/rewrite/#url=https%3A%2F%2Ffixture.test%2F');
+  await expect(page.locator('#homeControls')).toBeVisible();
+  await page.getByText('Connection options', { exact: true }).click();
+  await expect(page.locator('#homeVerify')).toBeEnabled();
+  await page.getByLabel('Host password', { exact: true }).fill('fixture-password');
+  await page.getByRole('button', { name: 'Verify host' }).click();
+  await expect(page.locator('#homeRoute')).toHaveValue('home');
+  await page.getByRole('button', { name: 'Forget verification' }).click();
+  await expect(page.locator('#homeRoute')).toHaveValue('cloudflare');
+  await expect(page.locator('#homeRoute option[value="home"]')).toHaveJSProperty('disabled', true);
+});

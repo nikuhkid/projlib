@@ -11,4 +11,7 @@ a { margin-left: auto; font-size: 12px; }
 #notice:empty { display: none; }
 #site { width: 100%; flex: 1; min-height: 0; border: 0; background: white; }
 footer { display: flex; justify-content: flex-end; padding: 7px 10px; }
+#homeControls { padding: 8px 12px; }
+#homeControls form { display: inline-flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+#homeControls input, #homeControls select { max-width: 100%; font: inherit; padding: 5px; }
 [hidden] { display: none !important; }

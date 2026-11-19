@@ -16,6 +16,13 @@
     <button id="reload">Refresh</button>
     <button id="clear">Clear browsing data</button>
   </nav>
+  <details id="homeControls" hidden>
+    <summary>Connection options</summary>
+    <label>Connection <select id="homeRoute"><option value="cloudflare">Cloudflare</option><option value="home" disabled>Wolfie · home connection</option></select></label>
+    <form id="homeForm"><label>Host password <input id="homePassword" type="password" maxlength="256" autocomplete="off" required></label><button id="homeVerify" disabled>Verify host</button></form>
+    <button id="homeForget" type="button" hidden>Forget verification</button>
+    <p id="homeStatus" role="status"></p>
+  </details>
   <p id="notice" role="status">Starting the website viewer…</p>
   <iframe id="site" title="Proxied website" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" allow="fullscreen" referrerpolicy="no-referrer" hidden></iframe>
   <footer id="viewerFooter"><a id="source" href="/rewrite/source.html" target="_blank" rel="noopener noreferrer">Source and licences</a></footer>
