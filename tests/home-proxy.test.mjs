@@ -27,6 +27,10 @@ test('home gateway authenticates before egress and preserves forms, cookies, gzi
   const fixture = http.createServer(async (request, response) => {
     const chunks = []; for await (const chunk of request) chunks.push(chunk);
     if (request.url === '/gzip') { response.writeHead(200, { 'content-encoding': 'gzip' }); response.end(gzipSync('decoded response')); return; }
+    if (request.url === '/wide-headers' || request.url === '/excessive-headers') {
+      response.writeHead(200, { 'x-wide': 'x'.repeat(request.url === '/wide-headers' ? 20 * 1024 : 70 * 1024) });
+      response.end('wide-header response'); return;
+    }
     response.writeHead(request.headers.range ? 206 : 200, { 'set-cookie': ['a=1; HttpOnly', 'b=2'], 'content-type': 'application/json' });
     response.end(JSON.stringify({ body: Buffer.concat(chunks).toString(), cookie: request.headers.cookie, authorization: request.headers.authorization, host: request.headers.host, bridge: request.headers['x-projlib-bridge'] }));
   });
@@ -55,6 +59,27 @@ test('home gateway authenticates before egress and preserves forms, cookies, gzi
   assert.deepEqual(JSON.parse(decodeURIComponent(form.headers.get('x-projlib-response'))).headers['set-cookie'], ['a=1; HttpOnly', 'b=2']);
   assert.deepEqual(await form.json(), { body: 'a=1&b=2', cookie: 'virtual=1', authorization: 'Bearer virtual', host: 'fixture.test' });
   assert.equal(await (await send('https://fixture.test/gzip')).text(), 'decoded response');
+  // The transport encodes destination headers into a header of its own, so its test client
+  // also needs room for the response that exceeds Node's default 16 KiB parser limit.
+  const sendWide = url => new Promise((resolve, reject) => {
+    const request = http.request(base + '/fetch', { method: 'POST', maxHeaderSize: 65536, headers: {
+      ...headers, 'x-projlib-request': encodeURIComponent(JSON.stringify({ url, method: 'GET', headers: {} }))
+    } }, response => {
+      const chunks = []; response.on('data', chunk => chunks.push(chunk));
+      response.on('error', reject);
+      response.on('end', () => resolve({ status: response.statusCode, headers: response.headers, body: Buffer.concat(chunks).toString() }));
+    });
+    request.on('error', reject); request.end();
+  });
+  for (const scheme of ['http', 'https']) {
+    const wide = await sendWide(`${scheme}://fixture.test/wide-headers`);
+    assert.equal(wide.status, 200);
+    assert.equal(JSON.parse(decodeURIComponent(wide.headers['x-projlib-response'])).headers['x-wide'].length, 20 * 1024);
+    assert.equal(wide.body, 'wide-header response');
+  }
+  const excessive = await sendWide('https://fixture.test/excessive-headers');
+  assert.equal(excessive.status, 502);
+  assert.match(excessive.body, /destination could not be reached/i);
   const range = await send('https://fixture.test/form', 'GET', undefined, { Range: 'bytes=0-8' });
   assert.equal(JSON.parse(decodeURIComponent(range.headers.get('x-projlib-response'))).status, 206); await range.body.cancel();
   const before = destinations;

@@ -7,6 +7,7 @@ import { checkPassword, issueSession, sameSecret, verifySession } from './home-a
 
 const MAX_BODY = 16 * 1024 * 1024;
 const MAX_META = 60000;
+const MAX_RESPONSE_HEADERS = 64 * 1024;
 const EXCLUDED = /^(host|connection|upgrade|keep-alive|te|trailer|transfer-encoding|content-length|accept-encoding|proxy-.*|cf-.*|x-forwarded-.*|forwarded|sec-websocket-.*|x-projlib-.*)$/i;
 const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']);
 
@@ -102,7 +103,7 @@ export function createHomeGateway({ bridgeKey, getPassword, blockedHosts = [], r
       const makeRequest = target.protocol === 'https:' ? makeHttpsRequest : makeHttpRequest;
       upstream = makeRequest({ hostname: pinned.address, family: pinned.family, port: target.protocol === 'https:' ? 443 : 80,
         servername: target.hostname, path: target.pathname + target.search, method: metadata.method,
-        headers: outgoingHeaders(metadata.headers, target), agent: false }, result => {
+        headers: outgoingHeaders(metadata.headers, target), maxHeaderSize: MAX_RESPONSE_HEADERS, agent: false }, result => {
         clearTimeout(headerTimer);
         const headers = { ...result.headers };
         let stream = result;
