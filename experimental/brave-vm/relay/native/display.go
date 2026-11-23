@@ -9,6 +9,7 @@ import (
     "os"
     "os/exec"
     "strings"
+    "sync/atomic"
     "time"
 )
 
@@ -28,11 +29,21 @@ func runGuestDisplay() error {
     raw.Stdin = os.Stdin
     _ = raw.Run()
     fmt.Print("\nPROJLIB_RFB_READY\n")
+    var saving atomic.Bool
     go func() {
         scanner := bufio.NewScanner(os.Stdin)
         scanner.Buffer(make([]byte, 4096), 131072)
         for scanner.Scan() {
             line := scanner.Text()
+            if line == "PROJLIB_VM_CONTROL:save" {
+                if saving.CompareAndSwap(false, true) { go func() {
+                    defer saving.Store(false)
+                    size, err := exportGuestProfile()
+                    if err != nil { fmt.Print("PROJLIB_PROFILE_FAILED\n"); return }
+                    fmt.Printf("PROJLIB_PROFILE_READY:%d\n", size)
+                }() }
+                continue
+            }
             if !strings.HasPrefix(line, "PROJLIB_RFB_INPUT:") { continue }
             decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(line, "PROJLIB_RFB_INPUT:"))
             if err != nil || len(decoded) > 65536 { continue }

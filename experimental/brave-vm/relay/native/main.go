@@ -23,6 +23,10 @@ import (
 // the browser and filters Ethernet packets before forwarding to this loopback socket.
 // Exiting the process releases the entire guest network stack and its native sockets.
 func main() {
+    if len(os.Args) == 2 && (os.Args[1] == "--profile-import" || os.Args[1] == "--profile-export") {
+        if runGuestProfile(os.Args[1]) != nil { fmt.Println("PROJLIB_PROFILE_FAILED"); os.Exit(1) }
+        return
+    }
     if len(os.Args) == 2 && os.Args[1] == "--rfb-stdio" {
         if runGuestDisplay() != nil { os.Exit(1) }
         return
