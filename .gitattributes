@@ -7,3 +7,4 @@ rewrite/adblock/vendor/** -text -whitespace
 rewrite/adblock-engine/** text eol=lf
 *.wasm binary
 README.md text eol=lf
+experimental/brave-vm/** text eol=lf
