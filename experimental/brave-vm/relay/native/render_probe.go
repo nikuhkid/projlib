@@ -13,8 +13,8 @@ import (
 
 // Disposable blank-guest diagnostic only. This loopback endpoint stays inside
 // the local Wasm guest; no DevTools connection goes to Wolfie or a website.
-func runGuestRenderProbe() error {
-    if err := guestProfileGuard(); err != nil { return err }
+func connectGuestDevTools() (*websocket.Conn, error) {
+    if err := guestProfileGuard(); err != nil { return nil, err }
     client := &http.Client{Timeout: 2*time.Second}
     deadline := time.Now().Add(5*time.Minute)
     var version struct { WebSocketDebuggerURL string `json:"webSocketDebuggerUrl"` }
@@ -27,10 +27,15 @@ func runGuestRenderProbe() error {
         time.Sleep(250*time.Millisecond)
     }
     endpoint, err := url.Parse(version.WebSocketDebuggerURL)
-    if err != nil || endpoint.Scheme != "ws" || endpoint.Hostname() != "127.0.0.1" || endpoint.Port() != "9222" { return errors.New("guest diagnostic endpoint unavailable") }
-    config, err := websocket.NewConfig(endpoint.String(), "http://localhost"); if err != nil { return err }
-    connection, err := websocket.DialConfig(config); if err != nil { return err }; defer connection.Close()
+    if err != nil || endpoint.Scheme != "ws" || endpoint.Hostname() != "127.0.0.1" || endpoint.Port() != "9222" { return nil, errors.New("guest diagnostic endpoint unavailable") }
+    config, err := websocket.NewConfig(endpoint.String(), "http://localhost"); if err != nil { return nil, err }
+    connection, err := websocket.DialConfig(config); if err != nil { return nil, err }
     connection.MaxPayloadBytes = 1024*1024
+    return connection, nil
+}
+
+func runGuestRenderProbe() error {
+    connection, err := connectGuestDevTools(); if err != nil { return err }; defer connection.Close()
     sequence := 0
     call := func(method string, params any, session string, result any) error {
         sequence++
@@ -55,7 +60,7 @@ func runGuestRenderProbe() error {
     if err := call("Target.attachToTarget", map[string]any{"targetId":target,"flatten":true}, "", &attached); err != nil { return err }
     html := "<title>ProjLib Brave engine probe</title><p id=\"proof\">Actual Brave executed inside the guest</p>"
     if err := call("Page.navigate", map[string]any{"url":"data:text/html,"+url.PathEscape(html)}, attached.Session, nil); err != nil { return err }
-    deadline = time.Now().Add(2*time.Minute)
+    deadline := time.Now().Add(2*time.Minute)
     for time.Now().Before(deadline) {
         var evaluated struct { Result struct { Value string `json:"value"` } `json:"result"` }
         if err := call("Runtime.evaluate", map[string]any{"expression":"document.getElementById(\"proof\")?.textContent", "returnByValue":true}, attached.Session, &evaluated); err != nil { return err }

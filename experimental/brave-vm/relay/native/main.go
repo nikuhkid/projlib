@@ -23,6 +23,10 @@ import (
 // the browser and filters Ethernet packets before forwarding to this loopback socket.
 // Exiting the process releases the entire guest network stack and its native sockets.
 func main() {
+    if len(os.Args) == 2 && os.Args[1] == "--cdp-stdio" {
+        if runGuestCdpDisplay() != nil { fmt.Println("PROJLIB_LOCAL_BROWSER_FAILED"); os.Exit(1) }
+        return
+    }
     if len(os.Args) == 2 && os.Args[1] == "--render-probe" {
         if runGuestRenderProbe() != nil { fmt.Println("PROJLIB_RENDER_PROBE_FAILED"); os.Exit(1) }
         return
