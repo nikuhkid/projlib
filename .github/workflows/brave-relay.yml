@@ -30,17 +30,20 @@ jobs:
         run: go vet ./... && go test ./...
       - name: Compile candidate helpers
         run: |
-          mkdir -p ../../../../../.local/brave-relay-candidate
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -o ../../../../../.local/brave-relay-candidate/ProjLibBraveRelay.exe .
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o ../../../../../.local/brave-relay-candidate/projlib-brave-relay .
-          cp go.mod go.sum ../../../../../.local/brave-relay-candidate/
-          go version > ../../../../../.local/brave-relay-candidate/compiler.txt
-          go list -m -json all > ../../../../../.local/brave-relay-candidate/dependencies.json
-          go mod vendor -o ../../../../../.local/brave-relay-vendor
-          tar -czf ../../../../../.local/brave-relay-candidate/dependency-source.tar.gz -C ../../../../../.local/brave-relay-vendor .
-          sha256sum ../../../../../.local/brave-relay-candidate/* > ../../../../../.local/brave-relay-candidate/SHA256SUMS
+          candidate="$GITHUB_WORKSPACE/.local/brave-relay-candidate"
+          vendor="$GITHUB_WORKSPACE/.local/brave-relay-vendor"
+          mkdir -p "$candidate"
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -o "$candidate/ProjLibBraveRelay.exe" .
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o "$candidate/projlib-brave-relay" .
+          cp go.mod go.sum "$candidate/"
+          go version > "$candidate/compiler.txt"
+          go list -m -json all > "$candidate/dependencies.json"
+          go mod vendor -o "$vendor"
+          tar -czf "$candidate/dependency-source.tar.gz" -C "$vendor" .
+          find "$candidate" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > "$candidate/SHA256SUMS"
       - uses: actions/upload-artifact@v4
         with:
           name: brave-relay-helper-candidate
           path: .local/brave-relay-candidate/
+          if-no-files-found: error
           retention-days: 7
