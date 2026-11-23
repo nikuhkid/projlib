@@ -28,7 +28,7 @@ func runGuestDisplay() error {
     raw := exec.Command("stty", "raw", "-echo")
     raw.Stdin = os.Stdin
     _ = raw.Run()
-    fmt.Print("\nPROJLIB_RFB_READY\nPROJLIB_PROFILE_CAPABLE:1\nPROJLIB_INPUT_ACK_CAPABLE:1\n")
+    fmt.Print("\nPROJLIB_RFB_READY\nPROJLIB_PROFILE_CAPABLE:1\nPROJLIB_INPUT_ACK_CAPABLE:1\nPROJLIB_CLOSE_CAPABLE:1\n")
     var saving atomic.Bool
     go func() {
         scanner := bufio.NewScanner(os.Stdin)

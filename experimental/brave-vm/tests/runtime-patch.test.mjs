@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { patchLargeHeapFfi, patchQemuPointers } from '../patch-runtime.mjs';
+import { patchLargeHeapFfi, patchQemuPointers, patchTtyPollTimeout, patchTtyAtomicPointer } from '../patch-runtime.mjs';
 
 test('FFI heap indices retain the high address bit without changing signed data shifts elsewhere', () => {
   const source = `const signedData = -8 >> 2;
@@ -16,6 +16,21 @@ const otherSignedData = -16 >> 3;`;
   const run = code => new Function('HEAPU32', code + '\nreturn unbox_small_structs;')(memory)(highPointer);
   assert.equal(run(source), undefined);
   assert.equal(run(patched), 123);
+});
+
+test('guest poll forwards zero and short deadlines and caps indefinite TTY waits', () => {
+  const original = `function xterm_pty_old_poll(fds, nfds, timeout) { return stream.stream_ops.poll(stream, -1); }\nvar PTY_waitForReadableWithCallback = () => {};`;
+  const deadlines = []; const stream = { stream_ops: { poll: (_stream, timeout) => deadlines.push(timeout) } };
+  const poll = new Function('stream', patchTtyPollTimeout(original) + '\nreturn xterm_pty_old_poll;')(stream);
+  for (const timeout of [0, 5, -1, 1000]) poll(0, 0, timeout);
+  assert.deepEqual(deadlines, [0, 5, 10, 10]);
+});
+
+test('the terminal atomic wait retains high heap addresses as nonnegative indices', () => {
+  const original = 'let PTY_atomicIndex; PTY_atomicIndex = _malloc(4) >> 2; return PTY_atomicIndex;';
+  const allocation = () => 0x80000020 | 0;
+  assert(new Function('_malloc', original)(allocation) < 0);
+  assert.equal(new Function('_malloc', patchTtyAtomicPointer(original))(allocation), 0x80000020 >>> 2);
 });
 
 test('QEMU JIT pointer fields preserve high-bit wasm32 addresses for DataView access', () => {

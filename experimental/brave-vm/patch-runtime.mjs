@@ -31,17 +31,47 @@ export function patchQemuPointers(source) {
   return source.slice(0, start) + initializer + source.slice(end);
 }
 
+export function patchGuestSocketFactory(source) {
+  const constructor = 'WebSocketConstructor = WebSocket;';
+  if (source.split(constructor).length !== 2) throw new Error('The reviewed guest socket constructor differs.');
+  return source.replace(constructor, 'WebSocketConstructor = Module["projlibRelaySocket"] || WebSocket;');
+}
+
+export function patchTtyPollTimeout(source) {
+  const start = source.indexOf('function xterm_pty_old_poll(fds, nfds, timeout) {');
+  const end = source.indexOf('var PTY_waitForReadableWithCallback', start);
+  if (start < 0 || end < start) throw new Error('The reviewed PTY poll implementation is missing.');
+  const section = source.slice(start, end);
+  const call = 'stream.stream_ops.poll(stream, -1)';
+  if (section.split(call).length !== 2) throw new Error('The reviewed PTY poll call differs.');
+  // poll may return early. Bound the TTY wait because its EAGAIN interrupts the
+  // descriptor scan; network and timer descriptors must be revisited promptly.
+  return source.slice(0, start) + section.replace(call, 'stream.stream_ops.poll(stream, timeout < 0 ? 10 : Math.min(timeout, 10))') + source.slice(end);
+}
+
+export function patchTtyAtomicPointer(source) {
+  const allocation = 'PTY_atomicIndex = _malloc(4) >> 2;';
+  if (source.split(allocation).length !== 2) throw new Error('The reviewed PTY atomic pointer allocation differs.');
+  return source.replace(allocation, 'PTY_atomicIndex = _malloc(4) >>> 2;');
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const directory = resolve(process.argv[2]);
   const original = await readFile(resolve(directory, 'out.upstream.js'), 'utf8').catch(() => readFile(resolve(directory, 'out.js'), 'utf8'));
   if (hash(original) !== ORIGINAL) throw new Error('The candidate runtime differs from the reviewed build.');
   const patched = patchLargeHeapFfi(original);
   patched.source = patchQemuPointers(patched.source);
+  patched.source = patchGuestSocketFactory(patched.source);
+  patched.source = patchTtyPollTimeout(patched.source);
+  patched.source = patchTtyAtomicPointer(patched.source);
   await writeFile(resolve(directory, 'out.upstream.js'), original);
   await writeFile(resolve(directory, 'out.js'), patched.source);
   await writeFile(resolve(directory, 'runtime-patch.json'), JSON.stringify({
     originalSha256: ORIGINAL, patchedSha256: hash(patched.source), changes: patched.changes,
     qemuJitPointerCorrections: 5,
+    guestRelaySocketFactory: true,
+    ttyPollDeadlineForwardedAndCappedMs: 10,
+    ttyAtomicPointerCorrections: 1,
     reason: 'Normalize wasm32 pointers above 2 GiB: libffi heap indices require logical shifts, and QEMU JIT DataView pointer offsets require unsigned values.'
   }, null, 2));
   console.log(JSON.stringify({ patchedHeapIndices: patched.changes }));

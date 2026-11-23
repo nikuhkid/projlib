@@ -10,7 +10,19 @@
 <body>
   <h1>Brave execution probe</h1>
   <p>This checks the real Brave binary inside a local WebAssembly Linux guest. It is not a ready browsing session.</p>
+  <section id="host-verification" hidden>
+    <form id="host-form">
+      <label for="host-password">Wolfie host password</label>
+      <input id="host-password" type="password" autocomplete="current-password" minlength="8" maxlength="256" required>
+      <button id="verify-host" type="submit">Verify host</button>
+      <button id="disconnect-host" type="button" disabled>Disconnect</button>
+    </form>
+    <p id="host-status" role="status">Checking Wolfie…</p>
+    <p>Verification lasts 12 hours. Your Brave profile stays on this device.</p>
+  </section>
   <button id="start">Start isolated guest</button>
+  <button id="save-profile" hidden disabled>Save profile on this device</button>
+  <button id="close-profile" hidden disabled>Save and close Brave</button>
   <p id="status" role="status">Waiting to start.</p>
   <div id="terminal"></div>
   <div id="desktop" hidden style="width:100%;height:800px;background:black"></div>

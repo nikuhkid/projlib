@@ -10,6 +10,7 @@ export function createVmSessions({ getOrigin, getPassword, createHelper, blocked
   const websocket = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024, perMessageDeflate: false });
   const clients = new Map(), attempts = new Map();
   let checks = 0;
+  const traffic = { connections: 0, helperStarts: 0, fromGuestBytes: 0, toGuestBytes: 0, allowedFrames: 0, blockedFrames: 0 };
   const token = request => (request.headers.cookie || '').split(';').map(value => value.trim()).find(value => value.startsWith(COOKIE + '='))?.slice(COOKIE.length + 1);
   const grant = request => verifySession(token(request), getPassword(), now());
   const json = (response, code, value, session) => {
@@ -60,6 +61,7 @@ export function createVmSessions({ getOrigin, getPassword, createHelper, blocked
     const current = request.headers.origin === getOrigin() && grant(request);
     if (!current || !createHelper) { socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n'); return true; }
     websocket.handleUpgrade(request, socket, head, async client => {
+      traffic.connections++;
       clients.set(client, current);
       const record = getPassword();
       const filter = new QemuWebFilter({ blockedAddresses });
@@ -78,7 +80,12 @@ export function createVmSessions({ getOrigin, getPassword, createHelper, blocked
         if (ending) return;
         if (!binary) return end('Binary guest traffic is required.');
         try {
-          for (const packet of filter.push(data)) {
+          traffic.fromGuestBytes += data.length;
+          const previousBlocked = filter.blocked;
+          const packets = filter.push(data);
+          traffic.blockedFrames += filter.blocked - previousBlocked;
+          traffic.allowedFrames += packets.length;
+          for (const packet of packets) {
             if (!helper) {
               size += packet.length;
               if (size > 1024 * 1024) return end('The relay is not ready.');
@@ -92,11 +99,13 @@ export function createVmSessions({ getOrigin, getPassword, createHelper, blocked
       });
       try {
         helper = await createHelper();
+        traffic.helperStarts++;
         if (closed || ending) { helper.close(); return; }
         if (getPassword() !== record || current.expiresAt <= now()) return end('Host verification ended.');
         helper.socket.on('message', (data, binary) => {
           if (!binary || client.readyState !== WebSocket.OPEN) return;
           if (client.bufferedAmount > 2097152) return end('The browser cannot keep up.');
+          traffic.toGuestBytes += data.length;
           client.send(data, { binary: true });
         });
         helper.socket.on('error', () => end());
@@ -107,5 +116,5 @@ export function createVmSessions({ getOrigin, getPassword, createHelper, blocked
     });
     return true;
   }
-  return { handle, upgrade, revoke, close() { revoke(); websocket.close(); } };
+  return { handle, upgrade, revoke, statistics: () => ({ ...traffic, clients: clients.size }), close() { revoke(); websocket.close(); } };
 }
