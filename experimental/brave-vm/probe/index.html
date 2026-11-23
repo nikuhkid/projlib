@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ProjLib Brave execution probe</title>
+  <link rel="stylesheet" href="/vendor/xterm/css/xterm.css">
+  <style>body{margin:20px;background:#101522;color:#e6edf6;font:15px system-ui}button{font:inherit;padding:8px 14px}#terminal{margin-top:16px;height:75vh}#status{min-height:2em}</style>
+</head>
+<body>
+  <h1>Brave execution probe</h1>
+  <p>This checks the real Brave binary inside a local WebAssembly Linux guest. It is not a ready browsing session.</p>
+  <button id="start">Start isolated guest</button>
+  <p id="status" role="status">Waiting to start.</p>
+  <div id="terminal"></div>
+  <script src="/vendor/xterm/lib/xterm.js"></script>
+  <script src="/vendor/pty/index.js"></script>
+  <script src="/engine/load.js"></script>
+  <script type="module" src="/probe.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "projlib-brave-vm-experiment",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@xterm/xterm": "5.5.0",
+    "xterm-pty": "0.10.1"
+  }
+}

@@ -1,0 +1,46 @@
+name: Build experimental Brave relay helper
+
+on:
+  push:
+    branches: [experiment/brave-wasm]
+    paths:
+      - 'experimental/brave-vm/relay/native/**'
+      - '.github/workflows/brave-relay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: experimental/brave-vm/relay/native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: experimental/brave-vm/relay/native/go.mod
+          cache: false
+      - name: Resolve and verify dependencies
+        run: go mod tidy && go mod verify
+      - name: Check the helper
+        run: go vet ./... && go test ./...
+      - name: Compile candidate helpers
+        run: |
+          mkdir -p ../../../../../.local/brave-relay-candidate
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -o ../../../../../.local/brave-relay-candidate/ProjLibBraveRelay.exe .
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o ../../../../../.local/brave-relay-candidate/projlib-brave-relay .
+          cp go.mod go.sum ../../../../../.local/brave-relay-candidate/
+          go version > ../../../../../.local/brave-relay-candidate/compiler.txt
+          go list -m -json all > ../../../../../.local/brave-relay-candidate/dependencies.json
+          go mod vendor -o ../../../../../.local/brave-relay-vendor
+          tar -czf ../../../../../.local/brave-relay-candidate/dependency-source.tar.gz -C ../../../../../.local/brave-relay-vendor .
+          sha256sum ../../../../../.local/brave-relay-candidate/* > ../../../../../.local/brave-relay-candidate/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brave-relay-helper-candidate
+          path: .local/brave-relay-candidate/
+          retention-days: 7
