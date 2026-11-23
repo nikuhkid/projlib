@@ -30,7 +30,8 @@ fn dispatch(value: Value) -> Result<Value, String> {
                 let options: ParseOptions = serde_json::from_value(json!({
                     "permissions": list["permissions"].as_u64().unwrap_or(0)
                 })).map_err(|error| error.to_string())?;
-                cosmetics.add_filter_list(text.clone(), ParseOptions { rule_types: RuleTypes::CosmeticOnly, ..options });
+                // Cosmetic decisions also need network-style $generichide exceptions.
+                cosmetics.add_filter_list(text.clone(), options);
                 let options = ParseOptions { rule_types: RuleTypes::NetworkOnly, ..options };
                 if list["firstParty"].as_bool().unwrap_or(false) {
                     first_party.add_filter_list(text, options);
