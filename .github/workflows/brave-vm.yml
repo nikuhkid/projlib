@@ -4,7 +4,8 @@ on:
   push:
     branches: [experiment/brave-wasm]
     paths:
-      - 'experimental/brave-vm/**'
+      - 'experimental/brave-vm/guest/**'
+      - 'experimental/brave-vm/build/**'
       - '.github/workflows/brave-vm.yml'
   workflow_dispatch:
 
@@ -42,7 +43,7 @@ jobs:
             --build-arg VM_MEMORY_SIZE_MB=1536 --build-arg VM_CORE_NUMS=2 \
             --build-arg QEMU_MIGRATION=false --build-arg INIT_DEBUG=false \
             --build-arg LINUX_LOGLEVEL=4 --build-arg NO_VMTOUCH=true \
-            projlib-brave-vm:probe .local/brave-vm/output
+            projlib-brave-vm:probe .local/brave-vm/output/
       - name: Record candidate provenance
         run: |
           cp experimental/brave-vm/guest/Dockerfile .local/brave-vm/output/Guest-Dockerfile
