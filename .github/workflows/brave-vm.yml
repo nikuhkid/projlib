@@ -1,0 +1,57 @@
+name: Build experimental Brave WebAssembly guest
+
+on:
+  push:
+    branches: [experiment/brave-wasm]
+    paths:
+      - 'experimental/brave-vm/**'
+      - '.github/workflows/brave-vm.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brave-vm-candidate
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned converter source and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .local/brave-vm/tools .local/brave-vm/output
+          git clone --depth 1 --branch v0.8.5 https://github.com/container2wasm/container2wasm.git .local/brave-vm/upstream
+          test "$(git -C .local/brave-vm/upstream rev-parse HEAD)" = 087c313479d51cdf255e4f28ded6ae7d8141297b
+          gh release download v0.8.5 --repo container2wasm/container2wasm \
+            --pattern container2wasm-v0.8.5-linux-amd64.tar.gz --pattern SHA256SUMS --dir .local/brave-vm/tools
+          cd .local/brave-vm/tools
+          grep 'container2wasm-v0.8.5-linux-amd64.tar.gz$' SHA256SUMS | sha256sum --check
+          tar -xzf container2wasm-v0.8.5-linux-amd64.tar.gz
+      - name: Build official Brave guest
+        run: docker build --platform linux/amd64 --tag projlib-brave-vm:probe experimental/brave-vm/guest
+      - name: Compile 64-bit guest runtime to WebAssembly
+        run: |
+          .local/brave-vm/tools/c2w --to-js \
+            --build-arg VM_MEMORY_SIZE_MB=1536 --build-arg VM_CORE_NUMS=2 \
+            --build-arg QEMU_MIGRATION=false --build-arg INIT_DEBUG=false \
+            --build-arg LINUX_LOGLEVEL=4 --build-arg NO_VMTOUCH=true \
+            projlib-brave-vm:probe .local/brave-vm/output
+      - name: Record candidate provenance
+        run: |
+          cp experimental/brave-vm/guest/Dockerfile .local/brave-vm/output/Guest-Dockerfile
+          cp experimental/brave-vm/guest/start.sh .local/brave-vm/output/guest-start.sh
+          git -C .local/brave-vm/upstream rev-parse HEAD > .local/brave-vm/output/converter-revision.txt
+          docker image inspect projlib-brave-vm:probe > .local/brave-vm/output/guest-image.json
+          find .local/brave-vm/output -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > .local/brave-vm/output/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brave-vm-engine-candidate
+          path: .local/brave-vm/output/
+          retention-days: 7
