@@ -3,7 +3,7 @@
 export class BrowserCanvas {
   constructor(channel, target, { onReady = () => {}, onNavigate = () => {}, onError = () => {} } = {}) {
     this.channel = channel; this.onReady = onReady; this.onNavigate = onNavigate; this.onError = onError;
-    this.sequence = 0; this.pending = new Map(); this.buffer = ''; this.session = null; this.frames = 0; this.closed = false;
+    this.sequence = 0; this.pending = new Map(); this.buffer = ''; this.session = null; this.frames = 0; this.closed = false; this.ready = false;
     this.braveAliases = true;
     this.canvas = document.createElement('canvas'); this.canvas.width = 1024; this.canvas.height = 700;
     this.canvas.tabIndex = 0; this.canvas.setAttribute('aria-label', 'Local Brave browser');
@@ -33,7 +33,7 @@ export class BrowserCanvas {
     await this.call('Page.enable');
     await this.call('Emulation.setDeviceMetricsOverride', { width: 1024, height: 700, deviceScaleFactor: 1, mobile: false });
     await this.call('Page.startScreencast', { format: 'jpeg', quality: 55, maxWidth: 1024, maxHeight: 700, everyNthFrame: 1 });
-    this.onReady();
+    this.ready = true; this.onReady();
   }
   consume(text) {
     this.buffer += text;
@@ -81,6 +81,9 @@ export class BrowserCanvas {
     this.canvas.addEventListener('pointermove', event => { if (!event.buttons) return; send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point(event), buttons: event.buttons }); });
     this.canvas.addEventListener('wheel', event => { event.preventDefault(); send('Input.dispatchMouseEvent', { type: 'mouseWheel', ...point(event), deltaX: event.deltaX, deltaY: event.deltaY }); }, { passive: false });
     for (const [dom, type] of [['keydown','keyDown'], ['keyup','keyUp']]) this.canvas.addEventListener(dom, event => {
+      // Let Chrome dispatch its paste event; forwarding Ctrl+V to the guest
+      // would use the guest's unrelated clipboard and suppress the local paste.
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.code === 'KeyV') return;
       event.preventDefault(); if (event.isComposing) return;
       const modifiers = (event.altKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.metaKey ? 4 : 0) | (event.shiftKey ? 8 : 0);
       send('Input.dispatchKeyEvent', { type, key: event.key, code: event.code, windowsVirtualKeyCode: event.keyCode, modifiers,

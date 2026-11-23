@@ -183,6 +183,8 @@ button.onclick = async () => {
     const { master, slave } = openpty();
     terminal.loadAddon(master);
     const settings = window.Module = { preRun: [], locateFile: name => new URL('/engine/' + name, location.href).href };
+    const extendedHeap = new URLSearchParams(location.search).get('heapMiB') === '3584';
+    if (extendedHeap) settings.INITIAL_MEMORY = 3584*1024*1024;
     // Set the asset base before the packager starts fetching the large guest image.
     await new Promise((resolve, reject) => {
       const script = document.createElement('script'); script.src = '/engine/load.js';
@@ -207,7 +209,7 @@ button.onclick = async () => {
     const { default: createRuntime } = await import('/engine/out.js');
     settings.pty = slave;
     settings.mainScriptUrlOrBlob = new URL('/engine/out.js', location.href).href;
-    settings.locateFile = name => new URL('/engine/' + name, location.href).href;
+    settings.locateFile = name => new URL('/engine/' + (extendedHeap && name === 'qemu-system-x86_64.wasm' ? 'qemu-system-x86_64.heap3584.wasm' : name), location.href).href;
     settings.printErr = text => { log.errors.push(String(text)); terminal.writeln(String(text)); };
     settings.onAbort = reason => { log.errors.push(String(reason)); status.textContent = 'Guest aborted: ' + reason; };
     const readable = new Set();

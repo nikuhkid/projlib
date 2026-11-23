@@ -15,8 +15,10 @@ import (
 // the local Wasm guest; no DevTools connection goes to Wolfie or a website.
 func connectGuestDevTools() (*websocket.Conn, error) {
     if err := guestProfileGuard(); err != nil { return nil, err }
-    client := &http.Client{Timeout: 2*time.Second}
-    deadline := time.Now().Add(5*time.Minute)
+    // Full CPU emulation can spend several seconds handling the first internal
+    // HTTP request. A two-second timeout repeatedly aborted a cold endpoint.
+    client := &http.Client{Timeout: 15*time.Second}
+    deadline := time.Now().Add(10*time.Minute)
     var version struct { WebSocketDebuggerURL string `json:"webSocketDebuggerUrl"` }
     for time.Now().Before(deadline) {
         response, err := client.Get("http://127.0.0.1:9222/json/version")

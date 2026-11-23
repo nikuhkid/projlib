@@ -43,12 +43,22 @@ export async function probeControl(page, directory, input) {
   }
   if (canvasMode && command === 'inspect-sync') {
     const state = await page.evaluate(async () => {
-      const result = await window.projlibBrowserCanvas.call('Runtime.evaluate', { expression: `(() => { const roots=[document]; let sync=false; while(roots.length) { const root=roots.pop(); for(const element of root.querySelectorAll('*')) { if(element.tagName.toLowerCase().includes('sync')) sync=true; if(element.shadowRoot) roots.push(element.shadowRoot); } } return {nativeSyncRoute:location.pathname.includes('braveSync'),nativeSyncComponent:sync}; })()`, returnByValue: true });
+      const result = await window.projlibBrowserCanvas.call('Runtime.evaluate', { expression: `(() => { const roots=[document]; let sync=false; while(roots.length) { const root=roots.pop(); for(const element of root.querySelectorAll('*')) { if(element.tagName.toLowerCase().includes('brave-sync')) sync=true; if(element.shadowRoot) roots.push(element.shadowRoot); } } return {nativeSyncRoute:location.pathname.includes('braveSync'),nativeSyncComponent:sync}; })()`, returnByValue: true });
       const state = result.result?.value || {};
       window.projlibProbe.syncUiVerified = state.nativeSyncRoute === true && state.nativeSyncComponent === true;
       return state;
     });
     return 'Native Sync UI check: ' + JSON.stringify(state);
+  }
+  if (canvasMode && command === 'latency-fixture') {
+    const elapsed = await page.evaluate(async () => {
+      const started = performance.now();
+      const result = await window.projlibBrowserCanvas.call('Runtime.evaluate', { expression: '1+1', returnByValue: true });
+      if (result.result?.value !== 2) throw new Error('The fixed responsiveness fixture failed.');
+      const elapsedMs = Math.round(performance.now()-started);
+      window.projlibProbe.canvasRoundtripMs = elapsedMs; return elapsedMs;
+    });
+    return 'Local native browser command round-trip: ' + elapsed + ' ms.';
   }
   if (canvasMode && command === 'check-home-egress') {
     const expected = (await (await fetch('https://api.ipify.org/')).text()).trim();

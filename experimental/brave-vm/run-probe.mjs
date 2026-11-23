@@ -35,12 +35,20 @@ const engineDirectory = await realpath(process.argv[2]);
 const runtimeSha256 = createHash('sha256').update(await readFile(resolve(engineDirectory, 'out.js'))).digest('hex');
 const runtimePatch = JSON.parse(await readFile(resolve(engineDirectory, 'runtime-patch.json'), 'utf8'));
 if (runtimePatch.patchedSha256 !== runtimeSha256) throw new Error('The runtime does not match its reviewed patch record.');
+const extendedHeap = process.argv.includes('--extended-heap');
+let heapMaximum = null;
+if (extendedHeap) {
+  heapMaximum = JSON.parse(await readFile(resolve(engineDirectory, 'heap-maximum.json'), 'utf8'));
+  const binary = await readFile(resolve(engineDirectory, 'qemu-system-x86_64.heap3584.wasm'));
+  if (heapMaximum.initialHeapMiB !== 3584 || heapMaximum.patchedSha256 !== createHash('sha256').update(binary).digest('hex')) throw new Error('The extended heap candidate does not match its patch record.');
+}
 const server = await serveProbe(engineDirectory, probePort, { relayExecutable });
 const browser = browserProfile ? await chromium.launchPersistentContext(browserProfile, { headless: true, chromiumSandbox: true }) : await chromium.launch({ headless: true, chromiumSandbox: true });
 console.log(JSON.stringify({ probeUrl: server.url, dedicatedBrowserProfile: browserProfile || null }));
 const started = Date.now();
 const errors = [];
 const options = new URLSearchParams();
+if (extendedHeap) options.set('heapMiB', '3584');
 for (const [flag, key, values] of [['--tb-mib','tbMiB',[64,128,256,500]]]) {
   const index = process.argv.indexOf(flag);
   if (index >= 0) {
@@ -83,7 +91,7 @@ try {
     if (!login.ok()) throw new Error('The disposable lab relay could not be authenticated.');
   }
     const snapshot = () => page.evaluate(() => { return ({ ...window.projlibProbe, diagnostics: window.projlibChannel?.diagnostics || '', status: document.querySelector('#status').textContent,
-    browserCanvas: window.projlibBrowserCanvas ? { ready: Boolean(window.projlibBrowserCanvas.session), frames: window.projlibBrowserCanvas.frames, pending: window.projlibBrowserCanvas.pending.size } : null,
+    browserCanvas: window.projlibBrowserCanvas ? { ready: window.projlibBrowserCanvas.ready, frames: window.projlibBrowserCanvas.frames, pending: window.projlibBrowserCanvas.pending.size } : null,
     display: window.projlibDisplay ? { state: window.projlibDisplay._rfbConnectionState, phase: window.projlibDisplay._rfbInitState,
       channel: window.projlibChannel?.readyState, sent: window.projlibChannel?.sentBytes,
       received: window.projlibChannel?.receivedBytes, header: window.projlibChannel?.protocolHeader,
@@ -109,7 +117,7 @@ try {
   while (!stop && Date.now() - started < durationSeconds * 1000) {
     await page.waitForTimeout(10000);
     result = await snapshot();
-    await writeFile(evidence, JSON.stringify({ elapsedMs: Date.now() - started, engineDirectory, runtimeSha256, runtimePatch,
+    await writeFile(evidence, JSON.stringify({ elapsedMs: Date.now() - started, engineDirectory, runtimeSha256, runtimePatch, heapMaximum,
       options: options.toString(), result, pageErrors: errors }, null, 2));
     const progress = result.serial.slice(-1000);
     if (progress !== previous || result.errors.length || errors.length) {
@@ -122,7 +130,7 @@ try {
       await page.screenshot({ path: resolve(directory, 'brave-desktop.png'), fullPage: true });
       break;
     }
-    if (result.completed || result.displayDisconnect || errors.length || /Kernel panic - not syncing|fatal error:|Illegal instruction|PROJLIB_DISPLAY_START_FAILED|PROJLIB_DISPLAY_HELPER_FAILED/.test(result.serial)
+    if (result.completed || result.displayDisconnect || errors.length || /Kernel panic - not syncing|fatal error:|Illegal instruction|PROJLIB_DISPLAY_START_FAILED|PROJLIB_DISPLAY_HELPER_FAILED|PROJLIB_LOCAL_BROWSER_FAILED/.test(result.serial)
         || result.errors.length) break;
   }
   console.log(JSON.stringify({ braveBinaryVersion: result?.serial.match(/Brave Browser [\d.]+/)?.[0] || null,
