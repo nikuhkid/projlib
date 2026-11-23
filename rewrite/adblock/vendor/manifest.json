@@ -9,7 +9,7 @@
     "packager": "92d922f0a6570828603f8df70a2b35299d9b7999",
     "ublock": "cfa955fa8e1732e895e59fc6b8014e2317695ff3"
   },
-  "updatedAt": "2026-11-23T09:05:21.050Z",
+  "updatedAt": "2026-11-23T14:01:10.426Z",
   "lists": [
     {
       "title": "EasyList",
@@ -222,7 +222,7 @@
   ],
   "resources": 225,
   "files": {
-    "brave-adblock.wasm": "b85782f83c0a61b1c654f7835000aaf7b37103b791f624e3a0853be35b2f4b7d",
+    "brave-adblock.wasm": "43e49657021701fd1d464bba1cbf2a19ab56fbb5916a82c8211843e2bac2a306",
     "filters.json": "b9a71819a9577fa03c2dc9ec6196ca4b988d9948213eee3936af524371aafa0a",
     "resources.json": "e4643841ae2a26fb1d14cb7dcf45824c860b80d582970b919f6c41a3281dd83c",
     "content_cosmetic.ts": "41c822529d398ef0f862b3f7dc6a802346c08020f6222c876a32e6e8db35aa59",
@@ -231,8 +231,8 @@
     "brave-packager-original.js": "5a390676467d32a8038a396f4ee77680fde04b103c90fcded448d3758e776956",
     "Brave-MPL-2.0": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04",
     "uBlock-GPL-3.0": "e73d33841f942fa73aa5a63d4a6399cc39a29564db1dbca0915485842fcb236d",
-    "dependencies-source.tar.gz": "bdc4c033090b68b6cbac51cb37424d04e0760ef46bbe752753c20e83fbc2efc7",
-    "dependencies.json": "e8ec2be42b8528316ff9faaa5aabf05d28e230d692e9e77167f5c6ed39221a22",
+    "dependencies-source.tar.gz": "3c4a0021f0098e55eb7d5c0276059d183fcccd1f16647947cc3866b8ec172dd9",
+    "dependencies.json": "b164a26bd635baaac0b24dcb23fbce9d422b3f6ce0b02c3215f8a7d3806bf802",
     "cargo-config.toml": "ff05d8442f1180fb6e041c48e3c030fb1fb86549159ed69aafc464524273d5a8",
     "rust-toolchain.txt": "be69adad9137eaa0bdac1dd07e2fe286b1831fc8bad193ea27806ca0c7c8e7c6",
     "ublock-source.tar.gz": "c3c4c966bdadbb97f72a3514ad3004d2523ca40475726e72e7eae89d753bbcf2",
@@ -268,7 +268,7 @@
   },
   "bridgeSource": {
     "src/lib.rs": "3cb51611c98da82c2aada12205416a52049c536f3f20a044e8ccbeb50d241498",
-    "Cargo.toml": "6c6ed443c09fbb537fb09840bfe56dfafd2c412e155d67fdfad2edcbc567e74f",
-    "Cargo.lock": "b59b71ae2a423ade0628bc60b30eca289e5c6f049c3ab1ef31cb1044c7bddf5e"
+    "Cargo.toml": "fb6448a20280db088db83e2d1e690661456832520b3feecc62ecbb8f8df9c9ed",
+    "Cargo.lock": "22a361bfc245b59d1394170fe2746722b674bfffd9bbf883370b01cec1cfc1db"
   }
 }

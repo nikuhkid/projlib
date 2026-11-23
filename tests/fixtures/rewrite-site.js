@@ -23,6 +23,9 @@ async function fixtureFetch(request) {
       }
       const metadata = JSON.parse(decodeURIComponent(request.headers.get('x-projlib-request')));
       const target = new URL(metadata.url);
+      if (target.pathname === '/route') return new Response('<h1 id="egress">home</h1>', { headers: {
+        'x-projlib-response': encodeURIComponent(JSON.stringify({ status: 200, statusText: 'OK', headers: { 'content-type': 'text/html' } }))
+      } });
       if (target.pathname.startsWith('/adblock') || target.hostname === 'pagead2.googlesyndication.com') {
         const response = await fixtureFetch(new Request(target, { method: metadata.method, headers: metadata.headers,
           body: ['GET', 'HEAD'].includes(metadata.method) ? undefined : await request.arrayBuffer() }));
@@ -37,6 +40,7 @@ async function fixtureFetch(request) {
       adRequests++;
       return new Response('window.adNetworkReached=true;', { headers: { 'content-type': 'text/javascript' } });
     }
+    if (url.pathname === '/route') return new Response('<h1 id="egress">cloudflare</h1>', { headers: { 'content-type': 'text/html' } });
     if (url.pathname === '/adblock/count') return Response.json({ requests: adRequests });
     if (url.pathname === '/adblock/ordinary.js') return new Response('window.regularAssetLoaded=true;', { headers: { 'content-type': 'text/javascript' } });
     if (url.pathname.startsWith('/adblock/tracker')) return new Response('ordinary fixture response');

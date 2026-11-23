@@ -43,13 +43,18 @@
       if (event.data?.type === 'projlib:blocker-state') {
         const blocker = event.data.state;
         adblockMode.disabled = !blocker.available;
-        adblockMode.value = blocker.mode;
         adblockStatus.textContent = blocker.mode === 'off' ? 'Ad blocking is off for this site.'
           : `Brave engine · ${blocker.blocked} requests blocked for this site this session.`;
+        for (const button of adblockMode.querySelectorAll('[data-blocker-mode]')) {
+          const selected = button.dataset.blockerMode === blocker.mode;
+          button.setAttribute('aria-pressed', String(selected));
+          button.title = button.getAttribute('aria-label') + (selected ? '. Active. ' + adblockStatus.textContent : '');
+        }
       }
       if (event.data?.type === 'projlib:blocker-error') {
         adblockMode.disabled = true;
         adblockStatus.textContent = event.data.message;
+        for (const button of adblockMode.querySelectorAll('[data-blocker-mode]')) button.title = event.data.message;
       }
     });
     form.addEventListener('submit', event => {
@@ -61,9 +66,11 @@
     });
     route.addEventListener('change', () => command('home-route', { route: route.value }));
     forget.addEventListener('click', () => command('home-logout'));
-    adblockMode.addEventListener('change', () => {
+    adblockMode.addEventListener('click', event => {
+      const button = event.target.closest('[data-blocker-mode]');
+      if (!button || adblockMode.disabled || button.getAttribute('aria-pressed') === 'true') return;
       adblockMode.disabled = true;
-      command('blocker-mode', { mode: adblockMode.value });
+      command('blocker-mode', { mode: button.dataset.blockerMode });
     });
     render(state);
     return { show(enabled) { panel.hidden = !enabled; }, ready() { command('home-status'); command('blocker-status'); } };

@@ -233,6 +233,17 @@ button:disabled, select:disabled { cursor: wait; opacity: .6; }
 .home-routing input { min-width: 0; max-width: 100%; }
 .home-routing select { max-width: 100%; }
 .home-routing p { width: 100%; margin: 0; font: 13px/1.5 system-ui, sans-serif; }
+.home-routing .blocker-status { width: 1px; height: 1px; }
+.blocker-controls { display: inline-flex; align-items: center; flex-shrink: 0; gap: 3px; min-inline-size: 0; margin: 0; padding: 3px; border: 1px solid #59657c; border-radius: 8px; }
+.blocker-controls .blocker-choice { display: grid; place-items: center; width: 34px; height: 34px; padding: 5px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #adb9c9; cursor: pointer; }
+.blocker-controls .blocker-choice svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.blocker-controls .blocker-choice:hover { background: #ffffff12; }
+.blocker-controls .blocker-choice[aria-pressed="true"] { color: #83e3e6; border-color: currentColor; background: #83e3e61a; }
+.blocker-controls .blocker-choice[data-blocker-mode="aggressive"][aria-pressed="true"] { color: #ffcb75; background: #ffcb751a; }
+.blocker-controls .blocker-choice[data-blocker-mode="off"][aria-pressed="true"] { color: #efaba5; background: #efaba51a; }
+.blocker-controls .blocker-choice:focus-visible { outline: 2px solid #83e3e6; outline-offset: 2px; }
+.blocker-controls:disabled { opacity: .55; }
+.blocker-controls:disabled .blocker-choice { cursor: default; }
 .browser-tools { display: flex; align-items: center; gap: 4px; padding: 5px; background: #222; flex-wrap: wrap; }
 .browser-tools button, .browser-tools select { border: 1px solid #666; border-radius: 4px; background: #333; color: #eee; padding: 5px 8px; font: inherit; }
 .browser-tabs { display: flex; flex: 1; min-width: 80px; overflow-x: auto; gap: 4px; }

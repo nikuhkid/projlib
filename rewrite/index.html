@@ -22,8 +22,13 @@
     <form id="homeForm"><label>Host password <input id="homePassword" type="password" maxlength="256" autocomplete="off" required></label><button id="homeVerify" disabled>Verify host</button></form>
     <button id="homeForget" type="button" hidden>Forget verification</button>
     <p id="homeStatus" role="status"></p>
-    <label>Brave ad blocking <select id="blockerMode" disabled><option value="standard">Standard</option><option value="aggressive">Aggressive</option><option value="off">Off for this site</option></select></label>
-    <p id="blockerStatus" role="status">Starting Brave ad blocking…</p>
+    <fieldset id="blockerMode" class="blocker-controls" disabled>
+      <legend class="sr-only">Brave ad blocking</legend>
+      <button class="blocker-choice" type="button" data-blocker-mode="standard" aria-label="Standard ad blocking" aria-pressed="false" title="Standard ad blocking"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m8 12 3 3 5-6"/></svg></button>
+      <button class="blocker-choice" type="button" data-blocker-mode="aggressive" aria-label="Aggressive ad blocking" aria-pressed="false" title="Aggressive ad blocking"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m13 7-5 6h4l-1 5 6-8h-4Z"/></svg></button>
+      <button class="blocker-choice" type="button" data-blocker-mode="off" aria-label="Disable ad blocking for this site" aria-pressed="false" title="Disable ad blocking for this site"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m3 3 18 18"/></svg></button>
+    </fieldset>
+    <p id="blockerStatus" class="sr-only" role="status">Starting Brave ad blocking…</p>
   </details>
   <p id="notice" role="status">Starting the website viewer…</p>
   <iframe id="site" title="Proxied website" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" allow="fullscreen" referrerpolicy="no-referrer" hidden></iframe>

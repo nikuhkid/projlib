@@ -59,21 +59,32 @@
         const state = result.state;
         if (parent === window) {
           document.getElementById('blockerMode').disabled = !state.available;
-          document.getElementById('blockerMode').value = state.mode;
           document.getElementById('blockerStatus').textContent = state.mode === 'off' ? 'Ad blocking is off for this site.'
             : `Brave engine · ${state.blocked} requests blocked for this site this session.`;
+          for (const button of document.querySelectorAll('#blockerMode [data-blocker-mode]')) {
+            const selected = button.dataset.blockerMode === state.mode;
+            button.setAttribute('aria-pressed', String(selected));
+            button.title = button.getAttribute('aria-label') + (selected ? '. Active. ' + document.getElementById('blockerStatus').textContent : '');
+          }
         }
         send('projlib:blocker-state', { state });
         if (action === 'mode') frame.reload();
       } catch (error) {
         document.getElementById('blockerStatus').textContent = error.message;
+        document.getElementById('blockerMode').disabled = true;
+        for (const button of document.querySelectorAll('#blockerMode [data-blocker-mode]')) button.title = error.message;
         send('projlib:blocker-error', { message: error.message });
       } finally {
         clearTimeout(blockerPoll);
         blockerPoll = setTimeout(() => blockerControl(), 3000);
       }
     }
-    document.getElementById('blockerMode').onchange = event => blockerControl('mode', event.target.value);
+    document.getElementById('blockerMode').onclick = event => {
+      const button = event.target.closest('[data-blocker-mode]');
+      if (!button || document.getElementById('blockerMode').disabled || button.getAttribute('aria-pressed') === 'true') return;
+      document.getElementById('blockerMode').disabled = true;
+      blockerControl('mode', button.dataset.blockerMode);
+    };
     const navigate = value => {
       try {
         const url = target(value);
@@ -113,6 +124,7 @@
           state = await check.json();
           if (!check.ok || !state.authorized) throw new Error('This browser did not retain the host verification. Check its cookie policy or open the proxy in its own tab.');
         }
+        const routeChanged = action !== 'status' && state.route && state.route !== homeState.route;
         homeState = { ...homeState, ...state };
         state = homeState;
         renderHome(state);
@@ -123,6 +135,12 @@
           homePoll = setTimeout(() => homeControl('status'), 60000);
         }
         if (state.unavailable) homePoll = setTimeout(() => homeControl('status'), 60000);
+        if (routeChanged) {
+          // Recreate the document and its media URLs through the newly selected exit.
+          let current;
+          try { current = target(frame.url.href); } catch { /* No website is open yet. */ }
+          if (current) frame.reload();
+        }
       } catch (error) { renderHome(homeState, error.message); send('projlib:home-error', { message: error.message }); }
     }
     if (parent === window) {

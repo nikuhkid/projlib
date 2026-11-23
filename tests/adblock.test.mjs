@@ -11,7 +11,8 @@ test('Brave engine preserves network exceptions, first-party modes, cosmetic exc
   engine.initialize([{ firstParty: false, permissions: 0, text: [
     '||ads.example^', '@@||ads.example/allowed^', '||fixture.test/own-ad.js$script',
     '@@||excepted.test^$generichide', '##.generic-ad', 'fixture.test##.site-ad',
-    'fixture.test##+js(set-constant, projlibAdFixture, true)'
+    'fixture.test##+js(set-constant, projlibAdFixture, true)',
+    'fixture.test##.sponsored:has-text(SPONSORED TEST):remove()'
   ].join('\n') }], resources);
   assert.equal(engine.check('https://ads.example/ad.js', 'https://fixture.test/', 'script').blocked, true);
   assert.equal(engine.check('https://ads.example/allowed/file.js', 'https://fixture.test/', 'script').blocked, false);
@@ -22,6 +23,12 @@ test('Brave engine preserves network exceptions, first-party modes, cosmetic exc
   assert(engine.cosmetics('https://fixture.test/').hide_selectors.includes('.site-ad'));
   assert(engine.selectors('https://fixture.test/', ['generic-ad'], []).includes('.generic-ad'));
   assert.match(engine.cosmetics('https://fixture.test/').injected_script, /setConstant\("projlibAdFixture", "true"\)/);
+  const procedural = engine.cosmetics('https://fixture.test/').procedural_actions;
+  assert.equal(procedural.length, 1);
+  assert.deepEqual(JSON.parse(procedural[0]).selector, [
+    { type: 'css-selector', arg: '.sponsored' },
+    { type: 'has-text', arg: 'SPONSORED TEST' }
+  ]);
   for (let index = 0; index < 1000; index++) {
     assert.equal(engine.check('https://fixture.test/ordinary.js?unicode=á日本語', 'https://fixture.test/', 'script').blocked, false);
   }

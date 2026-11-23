@@ -18,11 +18,15 @@ test('home routing unlocks once per browser, survives reload, keeps its expiry a
   await page.goto('/projlib/'); await unlockProjLib(page);
   await expect(page.locator('#homeRouting')).toBeHidden();
   await enableProxy(page);
-  await expect(page.locator('#adblockMode')).toBeEnabled();
-  await page.locator('#adblockMode').selectOption('off');
+  await expect(page.getByRole('button', { name: 'Standard ad blocking', exact: true })).toBeEnabled();
+  await expect(page.locator('#adblockMode button')).toHaveCount(3);
+  await page.getByRole('button', { name: 'Disable ad blocking for this site', exact: true }).click();
   await expect(page.locator('#adblockStatus')).toContainText('off for this site');
-  await page.locator('#adblockMode').selectOption('standard');
+  await page.getByRole('button', { name: 'Standard ad blocking', exact: true }).focus();
+  await page.keyboard.press('Space');
   await expect(page.locator('#adblockStatus')).toContainText('Brave engine');
+  await expect(page.getByRole('button', { name: 'Standard ad blocking', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Standard ad blocking', exact: true })).toHaveAttribute('title', /requests blocked/i);
   await expect(page.locator('#verifyHost')).toBeEnabled();
   await expect(page.locator('#proxyRoute option[value="home"]')).toBeDisabled();
   await page.getByLabel('Host password', { exact: true }).fill('wrong-password');
@@ -47,6 +51,7 @@ test('home routing unlocks once per browser, survives reload, keeps its expiry a
   await expect(page.locator('#proxyRoute')).toHaveValue('cloudflare');
   await page.setViewportSize({ width: 375, height: 812 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/blocker-icons-mobile.png', fullPage: true });
 });
 
 test('the local host panel saves the password without opening the network listener', async ({ page }) => {
@@ -81,4 +86,20 @@ test('the standalone proxy tab can verify and forget its own host session', asyn
   await page.getByRole('button', { name: 'Forget verification' }).click();
   await expect(page.locator('#homeRoute')).toHaveValue('cloudflare');
   await expect(page.locator('#homeRoute option[value="home"]')).toHaveJSProperty('disabled', true);
+});
+
+test('explicit route changes reload the open website through the selected exit', async ({ page }) => {
+  await page.goto(proxyBase + '/rewrite/#url=' + encodeURIComponent('https://fixture.test/route'));
+  const site = page.frameLocator('#site');
+  await expect(site.locator('#egress')).toHaveText('cloudflare');
+  await page.getByText('Connection options', { exact: true }).click();
+  await page.getByLabel('Host password', { exact: true }).fill('fixture-password');
+  await page.getByRole('button', { name: 'Verify host', exact: true }).click();
+  await expect(site.locator('#egress')).toHaveText('home');
+  await page.locator('#homeRoute').selectOption('cloudflare');
+  await expect(site.locator('#egress')).toHaveText('cloudflare');
+  await page.locator('#homeRoute').selectOption('home');
+  await expect(site.locator('#egress')).toHaveText('home');
+  await page.getByRole('button', { name: 'Forget verification' }).click();
+  await expect(site.locator('#egress')).toHaveText('cloudflare');
 });

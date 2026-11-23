@@ -14,4 +14,14 @@ footer { display: flex; justify-content: flex-end; padding: 7px 10px; }
 #homeControls { padding: 8px 12px; }
 #homeControls form { display: inline-flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 #homeControls input, #homeControls select { max-width: 100%; font: inherit; padding: 5px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.blocker-controls { display: inline-flex; align-items: center; gap: 3px; min-inline-size: 0; margin: 0; padding: 3px; border: 1px solid #59657c; border-radius: 8px; }
+.blocker-controls .blocker-choice { display: grid; place-items: center; width: 34px; height: 34px; padding: 5px; border: 1px solid transparent; background: transparent; color: #adb9c9; }
+.blocker-controls .blocker-choice svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.blocker-controls .blocker-choice:hover { background: #ffffff12; }
+.blocker-controls .blocker-choice[aria-pressed="true"] { color: #83e3e6; border-color: currentColor; background: #83e3e61a; }
+.blocker-controls .blocker-choice[data-blocker-mode="aggressive"][aria-pressed="true"] { color: #ffcb75; background: #ffcb751a; }
+.blocker-controls .blocker-choice[data-blocker-mode="off"][aria-pressed="true"] { color: #efaba5; background: #efaba51a; }
+.blocker-controls:disabled { opacity: .55; }
+.blocker-controls:disabled .blocker-choice { cursor: default; }
 [hidden] { display: none !important; }
