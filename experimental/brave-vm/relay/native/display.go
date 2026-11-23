@@ -35,11 +35,14 @@ func runGuestDisplay() error {
         scanner.Buffer(make([]byte, 4096), 131072)
         for scanner.Scan() {
             line := scanner.Text()
-            if line == "PROJLIB_VM_CONTROL:save" {
+            if line == "PROJLIB_VM_CONTROL:save" || line == "PROJLIB_VM_CONTROL:close" {
+                closing := line == "PROJLIB_VM_CONTROL:close"
                 if saving.CompareAndSwap(false, true) { go func() {
                     defer saving.Store(false)
+                    if closing { if err := closeGuestBrowser(); err != nil { fmt.Print("PROJLIB_PROFILE_FAILED\n"); return } }
                     size, err := exportGuestProfile()
                     if err != nil { fmt.Print("PROJLIB_PROFILE_FAILED\n"); return }
+                    if closing { fmt.Print("PROJLIB_BROWSER_STOPPED\n") }
                     fmt.Printf("PROJLIB_PROFILE_READY:%d\n", size)
                 }() }
                 continue

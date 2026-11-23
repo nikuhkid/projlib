@@ -1,6 +1,7 @@
 package main
 
 import (
+    "bytes"
     "errors"
     "os"
     "path/filepath"
@@ -10,6 +11,44 @@ import (
     "syscall"
     "time"
 )
+
+func closeGuestBrowser() error {
+    if err := guestProfileGuard(); err != nil { return err }
+    mainPIDs := func() ([]int, error) {
+        pids, err := guestBrowserPIDs(); if err != nil { return nil, err }
+        main := []int{}
+        for _, pid := range pids {
+            arguments, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
+            if errors.Is(err, os.ErrNotExist) { continue }; if err != nil { return nil, err }
+            first := bytes.SplitN(arguments, []byte{0}, 2)[0]
+            if string(first) == "/opt/brave.com/brave/brave" && !bytes.Contains(arguments, []byte("\x00--type=")) { main = append(main, pid) }
+        }
+        return main, nil
+    }
+    return stopSelectedBrowser(mainPIDs, guestBrowserPIDs, 90*time.Second)
+}
+
+// Ask only the selected browser main process to exit normally. Do not SIGKILL
+// renderers or take a shutdown snapshot while live writers remain.
+func stopSelectedBrowser(mainPIDs, allPIDs func() ([]int, error), limit time.Duration) error {
+    mains, err := mainPIDs(); if err != nil { return err }
+    for _, pid := range mains {
+        if err := syscall.Kill(pid, syscall.SIGTERM); err != nil && !errors.Is(err, syscall.ESRCH) { return err }
+    }
+    deadline := time.Now().Add(limit)
+    for {
+        pids, err := allPIDs(); if err != nil { return err }
+        alive := false
+        for _, pid := range pids {
+            status, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "status"))
+            if errors.Is(err, os.ErrNotExist) { continue }; if err != nil { return err }
+            if !strings.Contains(string(status), "Z (zombie)") { alive = true }
+        }
+        if !alive { return nil }
+        if time.Now().After(deadline) { return errors.New("Brave did not finish closing; the previous saved profile is retained") }
+        time.Sleep(100*time.Millisecond)
+    }
+}
 
 func guestBrowserPIDs() ([]int, error) {
     entries, err := os.ReadDir("/proc"); if err != nil { return nil, err }
