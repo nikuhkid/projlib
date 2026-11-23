@@ -1,6 +1,9 @@
 const GRANT = 'projlib_home_grant';
 const ROUTE = 'projlib_home_route';
 const HOURS = 12 * 60 * 60;
+// The host enforces the signed twelve-hour lifetime on every request. Its
+// clock can differ slightly from the Worker's clock when issuing the grant.
+const CLOCK_SKEW_MS = 60 * 1000;
 
 function value(request, name) {
   const item = (request.headers.get('cookie') || '').split(';').map(part => part.trim()).find(part => part.startsWith(name + '='));
@@ -89,9 +92,9 @@ export async function homeControl(request, env) {
       const upstream = await call(request, env, '/auth/login', { method: 'POST', body: JSON.stringify({ password: body.password }) });
       if (!upstream.ok) return result(await upstream.json(), upstream.status);
       const grant = await upstream.json();
-      if (!/^[\w-]+\.[\w-]+$/.test(grant.token) || !Number.isSafeInteger(grant.expiresAt) || grant.expiresAt <= Date.now() || grant.expiresAt > Date.now() + HOURS * 1000 + 1000) throw new Error('Invalid host session');
+      if (!/^[\w-]+\.[\w-]+$/.test(grant.token) || !Number.isSafeInteger(grant.expiresAt) || grant.expiresAt <= Date.now() || grant.expiresAt > Date.now() + HOURS * 1000 + CLOCK_SKEW_MS) throw new Error('Invalid host session');
       const response = result({ configured: true, authorized: true, route: 'home', expiresAt: grant.expiresAt });
-      response.headers.append('set-cookie', cookie(request, GRANT, grant.token, Math.max(1, Math.floor((grant.expiresAt - Date.now()) / 1000))));
+      response.headers.append('set-cookie', cookie(request, GRANT, grant.token, Math.min(HOURS, Math.max(1, Math.floor((grant.expiresAt - Date.now()) / 1000)))));
       response.headers.append('set-cookie', cookie(request, ROUTE, 'home'));
       return response;
     }
