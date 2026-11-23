@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 export async function serveProbe(engineDirectory, port = 0) {
   const engine = await realpath(engineDirectory);
   const directory = fileURLToPath(new URL('.', import.meta.url));
-  const roots = { '/engine/': engine, '/vendor/xterm/': resolve(directory, 'node_modules/@xterm/xterm'),
+  const roots = { '/engine/': engine, '/guest/': resolve(directory, 'desktop'), '/vendor/novnc/': resolve(directory, 'node_modules/@novnc/novnc'), '/vendor/xterm/': resolve(directory, 'node_modules/@xterm/xterm'),
     '/vendor/pty/': resolve(directory, 'node_modules/xterm-pty'), '/': resolve(directory, 'probe') };
   const mime = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm' };
   const server = http.createServer(async (request, response) => {
