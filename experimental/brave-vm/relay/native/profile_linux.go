@@ -20,8 +20,8 @@ func closeGuestBrowser() error {
         for _, pid := range pids {
             arguments, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
             if errors.Is(err, os.ErrNotExist) { continue }; if err != nil { return nil, err }
-            first := bytes.SplitN(arguments, []byte{0}, 2)[0]
-            if string(first) == "/opt/brave.com/brave/brave" && !bytes.Contains(arguments, []byte("\x00--type=")) { main = append(main, pid) }
+            executable, _ := os.Readlink(filepath.Join("/proc", strconv.Itoa(pid), "exe"))
+            if strings.TrimSuffix(executable, " (deleted)") == "/opt/brave.com/brave/brave" && !bytes.Contains(arguments, []byte("\x00--type=")) { main = append(main, pid) }
         }
         return main, nil
     }
