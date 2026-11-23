@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Thin JSON ABI around Brave's unmodified, MPL-2.0 adblock-rust engine.
-use adblock::{Engine, FilterSet, lists::ParseOptions, request::Request, resources::Resource};
+use adblock::{Engine, FilterSet, lists::{ParseOptions, RuleTypes}, request::Request, resources::Resource};
 use serde_json::{json, Value};
 use std::cell::RefCell;
 
@@ -30,7 +30,8 @@ fn dispatch(value: Value) -> Result<Value, String> {
                 let options: ParseOptions = serde_json::from_value(json!({
                     "permissions": list["permissions"].as_u64().unwrap_or(0)
                 })).map_err(|error| error.to_string())?;
-                cosmetics.add_filter_list(text.clone(), options);
+                cosmetics.add_filter_list(text.clone(), ParseOptions { rule_types: RuleTypes::CosmeticOnly, ..options });
+                let options = ParseOptions { rule_types: RuleTypes::NetworkOnly, ..options };
                 if list["firstParty"].as_bool().unwrap_or(false) {
                     first_party.add_filter_list(text, options);
                 } else {
@@ -94,6 +95,16 @@ pub unsafe extern "C" fn release(pointer: *mut u8, length: usize) {
 
 #[no_mangle]
 pub unsafe extern "C" fn execute(pointer: *const u8, length: usize) -> u64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        #[link(wasm_import_module = "env")]
+        extern "C" { fn projlib_panic(pointer: *const u8, length: usize); }
+        static HOOK: std::sync::Once = std::sync::Once::new();
+        HOOK.call_once(|| std::panic::set_hook(Box::new(|information| {
+            let message = information.to_string();
+            unsafe { projlib_panic(message.as_ptr(), message.len()); }
+        })));
+    }
     let result = serde_json::from_slice(std::slice::from_raw_parts(pointer, length))
         .map_err(|error| error.to_string()).and_then(dispatch);
     let result = match result {

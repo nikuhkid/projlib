@@ -28,6 +28,8 @@ jobs:
           cp .local/adblock-target/wasm32-unknown-unknown/release/projlib_brave_adblock.wasm .local/adblock-candidate/brave-adblock.wasm
           cp rewrite/adblock-engine/Cargo.lock .local/adblock-candidate/Cargo.lock
           cargo metadata --manifest-path rewrite/adblock-engine/Cargo.toml --format-version 1 > .local/adblock-candidate/dependencies.json
+          cargo vendor --locked --manifest-path rewrite/adblock-engine/Cargo.toml .local/adblock-vendor > .local/adblock-candidate/cargo-config.toml
+          tar -czf .local/adblock-candidate/dependencies-source.tar.gz -C .local/adblock-vendor .
           sha256sum .local/adblock-candidate/brave-adblock.wasm > .local/adblock-candidate/SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
