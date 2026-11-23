@@ -5,6 +5,7 @@ on:
     branches: [experiment/brave-wasm]
     paths:
       - '.github/workflows/brave-native-control.yml'
+      - 'experimental/brave-vm/run-native-control.mjs'
   workflow_dispatch:
 
 permissions:
@@ -16,29 +17,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Build the same pinned official Brave guest
         run: docker build --platform linux/amd64 --tag projlib-brave-native:control experimental/brave-vm/guest
       - name: Render the same controlled HTML with the browser sandbox enabled
-        run: |
-          set -euo pipefail
-          # These capabilities are confined to the disposable CI container. The
-          # official browser still runs as its unprivileged browser user and must
-          # create its sandbox; never pass --no-sandbox to make this check pass.
-          docker run --rm --cap-add=SYS_ADMIN --security-opt seccomp=unconfined \
-            --volume "$PWD/experimental/brave-vm/desktop:/probe:ro" \
-            --entrypoint /bin/sh projlib-brave-native:control -c '
-              set -eu
-              . /probe/fonts.sh
-              brave-browser --version
-              timeout 90 env -u DISPLAY dbus-run-session -- /bin/sh -c '\''
-                export DBUS_SYSTEM_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS"
-                exec brave-browser --headless --ozone-platform=headless \
-                  --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage \
-                  --no-first-run --no-default-browser-check --user-data-dir="$HOME/profile" \
-                  --dump-dom "data:text/html,<title>ProjLib Brave engine probe</title><p id=proof>Actual Brave executed inside the guest</p>"
-              '\''
-            ' 2>&1 | tee native-control.txt
-          grep -F '<p id="proof">Actual Brave executed inside the guest</p>' native-control.txt
+        run: node experimental/brave-vm/run-native-control.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
