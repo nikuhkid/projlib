@@ -28,7 +28,7 @@ func runGuestDisplay() error {
     raw := exec.Command("stty", "raw", "-echo")
     raw.Stdin = os.Stdin
     _ = raw.Run()
-    fmt.Print("\nPROJLIB_RFB_READY\nPROJLIB_PROFILE_CAPABLE:1\n")
+    fmt.Print("\nPROJLIB_RFB_READY\nPROJLIB_PROFILE_CAPABLE:1\nPROJLIB_INPUT_ACK_CAPABLE:1\n")
     var saving atomic.Bool
     go func() {
         scanner := bufio.NewScanner(os.Stdin)
@@ -48,6 +48,7 @@ func runGuestDisplay() error {
             decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(line, "PROJLIB_RFB_INPUT:"))
             if err != nil || len(decoded) > 65536 { continue }
             if _, err := connection.Write(decoded); err != nil { break }
+            fmt.Print("PROJLIB_RFB_INPUT_ACK\n")
         }
         _ = connection.Close()
     }()
