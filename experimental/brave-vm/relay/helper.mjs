@@ -29,7 +29,7 @@ export async function startNativeHelper(executable) {
       child.stdin.on('error', failed);
       child.stdin.end(JSON.stringify({ key }));
     });
-    socket = new WebSocket(`ws://127.0.0.1:${port}/relay`, { headers: { 'x-projlib-relay-instance': key }, handshakeTimeout: 10000, perMessageDeflate: false, maxPayload: 1024 * 1024 });
+    socket = new WebSocket(`ws://127.0.0.1:${port}/relay`, { headers: { 'x-projlib-relay-instance': key, origin: `http://127.0.0.1:${port}` }, handshakeTimeout: 10000, perMessageDeflate: false, maxPayload: 1024 * 1024 });
     await new Promise((resolve, reject) => { socket.once('open', resolve); socket.once('error', reject); });
     child.once('exit', () => socket.terminate());
     return { socket, close };

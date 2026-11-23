@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: experimental/brave-vm/relay/native/go.mod
-          cache: false
+          cache-dependency-path: experimental/brave-vm/relay/native/go.sum
       - name: Resolve and verify dependencies
         run: go mod tidy && go mod verify
       - name: Check the helper
