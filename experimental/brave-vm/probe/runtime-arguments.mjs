@@ -4,6 +4,13 @@ export function runtimeArguments(original, query = new URLSearchParams()) {
   const kernel = args.indexOf('-append') + 1;
   if (!kernel || typeof args[kernel] !== 'string') throw new Error('The guest kernel arguments are missing.');
   const cpu = query.get('cpu');
+  if (query.has('tbMiB')) {
+    const size = Number(query.get('tbMiB'));
+    if (![64, 128, 256, 500].includes(size)) throw new Error('Use a reviewed translation-cache size.');
+    const accelerator = args.indexOf('-accel') + 1;
+    if (!accelerator || !/^tcg,tb-size=500,thread=multi$/.test(args[accelerator])) throw new Error('The guest translator configuration differs.');
+    args[accelerator] = `tcg,tb-size=${size},thread=multi`;
+  }
   if (cpu === 'max') args.push('-cpu', 'max');
   else if (cpu !== 'baseline') args.push('-cpu', 'qemu64,+rdrand');
   if (query.get('single') === '1') {

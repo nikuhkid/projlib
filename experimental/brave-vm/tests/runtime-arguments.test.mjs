@@ -20,6 +20,15 @@ test('the recorded baseline remains available for isolated regression comparison
   assert.deepEqual(runtimeArguments(original, new URLSearchParams('cpu=baseline&clock=baseline')), original);
 });
 
+test('the bounded translation cache preserves the reviewed accelerator and rejects layout drift', () => {
+  const original = ['-append', 'console=ttyS0', '-accel', 'tcg,tb-size=500,thread=multi'];
+  const query = new URLSearchParams('tbMiB=128');
+  assert(runtimeArguments(original, query).includes('tcg,tb-size=128,thread=multi'));
+  assert.equal(original[3], 'tcg,tb-size=500,thread=multi');
+  assert.throws(() => runtimeArguments(original, new URLSearchParams('tbMiB=999')));
+  assert.throws(() => runtimeArguments(['-append','console=ttyS0','-accel','kvm'], query));
+});
+
 test('bounded polling moves each 9p share off the main loop while preserving mount identities', () => {
   const original = ['-append', 'console=ttyS0', '-virtfs', 'local,path=/,mount_tag=wasi0,security_model=passthrough,id=wasi0',
     '-virtfs', 'local,path=/pack,mount_tag=wasi1,security_model=passthrough,id=wasi1'];

@@ -58,6 +58,12 @@ export function patchTtyAtomicPointer(source) {
   return source.replace(allocation, 'PTY_atomicIndex = _malloc(4) >>> 2;');
 }
 
+export function patchAllocationDiagnostic(source) {
+  const original = 'var abortOnCannotGrowMemory = requestedSize => {\n  abort("OOM");\n};';
+  if (source.split(original).length !== 2) throw new Error('The reviewed fixed-heap allocation handler differs.');
+  return source.replace(original, 'var abortOnCannotGrowMemory = requestedSize => {\n  abort("OOM: fixed heap " + HEAPU8.length + ", requested " + (requestedSize >>> 0));\n};');
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const directory = resolve(process.argv[2]);
   const original = await readFile(resolve(directory, 'out.upstream.js'), 'utf8').catch(() => readFile(resolve(directory, 'out.js'), 'utf8'));
@@ -67,6 +73,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   patched.source = patchGuestSocketFactory(patched.source);
   patched.source = patchTtyPollTimeout(patched.source);
   patched.source = patchTtyAtomicPointer(patched.source);
+  patched.source = patchAllocationDiagnostic(patched.source);
   await writeFile(resolve(directory, 'out.upstream.js'), original);
   await writeFile(resolve(directory, 'out.js'), patched.source);
   await writeFile(resolve(directory, 'runtime-patch.json'), JSON.stringify({
@@ -75,6 +82,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     guestRelaySocketFactory: true,
     ttyPollDeadlineForwardedAndCappedMs: 10,
     ttyAtomicPointerCorrections: 1,
+    allocationSizesOnly: true,
     reason: 'Normalize wasm32 pointers above 2 GiB: libffi heap indices require logical shifts, and QEMU JIT DataView pointer offsets require unsigned values.'
   }, null, 2));
   console.log(JSON.stringify({ patchedHeapIndices: patched.changes }));

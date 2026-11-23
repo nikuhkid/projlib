@@ -41,10 +41,19 @@ console.log(JSON.stringify({ probeUrl: server.url, dedicatedBrowserProfile: brow
 const started = Date.now();
 const errors = [];
 const options = new URLSearchParams();
+for (const [flag, key, values] of [['--tb-mib','tbMiB',[64,128,256,500]]]) {
+  const index = process.argv.indexOf(flag);
+  if (index >= 0) {
+    const value = Number(process.argv[index+1]);
+    if (!values.includes(value)) throw new Error('Invalid ' + flag + ' comparison.');
+    options.set(key, String(value));
+  }
+}
 if (process.argv.includes('--cpu-max')) options.set('cpu', 'max');
 if (process.argv.includes('--cpu-rng')) options.set('cpu', 'rng');
 if (process.argv.includes('--diagnose')) options.set('diagnose', '1');
 if (process.argv.includes('--desktop')) options.set('desktop', '1');
+if (process.argv.includes('--browser-canvas')) options.set('browserCanvas', '1');
 if (process.argv.includes('--single-core')) options.set('single', '1');
 if (process.argv.includes('--tsc-clock')) options.set('clock', 'tsc');
 if (process.argv.includes('--trace')) options.set('trace', '1');
@@ -67,13 +76,14 @@ let stop = false;
 const commands = createInterface({ input: process.stdin });
 try {
   const page = await browser.newPage();
-  if (options.has('desktop')) await page.setViewportSize({ width: 1280, height: 1200 });
+  if (options.has('desktop') || options.has('browserCanvas')) await page.setViewportSize({ width: 1280, height: 1200 });
   if (server.labPassword) {
     const login = await page.request.post(server.url + 'browser-vm/auth/login', {
       headers: { origin: new URL(server.url).origin }, data: { password: server.labPassword } });
     if (!login.ok()) throw new Error('The disposable lab relay could not be authenticated.');
   }
     const snapshot = () => page.evaluate(() => { return ({ ...window.projlibProbe, diagnostics: window.projlibChannel?.diagnostics || '', status: document.querySelector('#status').textContent,
+    browserCanvas: window.projlibBrowserCanvas ? { ready: Boolean(window.projlibBrowserCanvas.session), frames: window.projlibBrowserCanvas.frames, pending: window.projlibBrowserCanvas.pending.size } : null,
     display: window.projlibDisplay ? { state: window.projlibDisplay._rfbConnectionState, phase: window.projlibDisplay._rfbInitState,
       channel: window.projlibChannel?.readyState, sent: window.projlibChannel?.sentBytes,
       received: window.projlibChannel?.receivedBytes, header: window.projlibChannel?.protocolHeader,
@@ -84,7 +94,7 @@ try {
   commands.on('line', async command => {
     try {
     if (command.trim() === 'stop') stop = true;
-    if (command.trim() === 'snapshot') { const state = await snapshot(); console.log(JSON.stringify({ status: state.status, display: state.display, relay: state.relay, disconnect: state.displayDisconnect, errors: state.errors })); }
+    if (command.trim() === 'snapshot') { const state = await snapshot(); console.log(JSON.stringify({ status: state.status, display: state.display, browserCanvas: state.browserCanvas, relay: state.relay, disconnect: state.displayDisconnect, errors: state.errors })); }
     const { probeControl } = await import('./probe-controls.mjs?revision=' + Date.now());
     const message = await probeControl(page, directory, command);
     if (message) console.log(message);

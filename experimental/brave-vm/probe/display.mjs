@@ -1,7 +1,9 @@
 // A WebSocket-shaped channel backed by the local guest's serial console.
 // Screen and keyboard data remain in this tab; this creates no network socket.
 export class GuestDisplayChannel {
-  constructor(writeInput) {
+  constructor(writeInput, { protocol = 'RFB', maxRecordBytes = 256000 } = {}) {
+    if (!['RFB', 'CDP'].includes(protocol)) throw new Error('Unknown local display protocol.');
+    this.protocolName = protocol; this.maxRecordBytes = maxRecordBytes;
     this.writeInput = writeInput;
     this.binaryType = 'arraybuffer'; this.protocol = ''; this.readyState = 0;
     this.onopen = null; this.onmessage = null; this.onerror = null; this.onclose = null;
@@ -34,7 +36,7 @@ export class GuestDisplayChannel {
     this.batchParts = []; this.batchBytes = 0;
     for (let offset = 0; offset < bytes.length; offset += 256) {
       const encoded = btoa(String.fromCharCode(...bytes.subarray(offset, offset + 256)));
-      const record = 'PROJLIB_RFB_INPUT:' + encoded + '\n';
+      const record = `PROJLIB_${this.protocolName}_INPUT:` + encoded + '\n';
       if (!this.inputAckCapable) this.writeInput(record);
       else {
         if (this.inputBytes + record.length > 1024*1024) throw new Error('The guest input queue is full.');
@@ -83,15 +85,15 @@ export class GuestDisplayChannel {
   }
   consume(data) {
     this.pending += data;
-    if (this.pending.length > 256000) throw new Error('Invalid local display framing.');
+    if (this.pending.length > this.maxRecordBytes) throw new Error('Invalid local display framing.');
     let lineEnd;
     while ((lineEnd = this.pending.indexOf('\n')) >= 0) {
       const line = this.pending.slice(0, lineEnd).trimEnd(); this.pending = this.pending.slice(lineEnd + 1);
-      if (line === 'PROJLIB_RFB_READY') { this.readyState = 1; this.onopen?.(); }
+      if (line === `PROJLIB_${this.protocolName}_READY`) { this.readyState = 1; this.onopen?.(); }
       else if (line === 'PROJLIB_PROFILE_CAPABLE:1') { this.profileCapable = true; this.onprofilecapability?.(); }
       else if (line === 'PROJLIB_CLOSE_CAPABLE:1') { this.closeCapable = true; this.onclosecapability?.(); }
       else if (line === 'PROJLIB_INPUT_ACK_CAPABLE:1') this.inputAckCapable = true;
-      else if (line === 'PROJLIB_RFB_INPUT_ACK') this.acknowledgeInput();
+      else if (line === `PROJLIB_${this.protocolName}_INPUT_ACK`) this.acknowledgeInput();
       else if (line === 'PROJLIB_INPUT_PROBE_PASS') this.oninputverified?.();
       else if (line === 'PROJLIB_BROWSER_STOPPED') this.browserStopped = true;
       else if (line.startsWith('PROJLIB_PROFILE_READY:')) {
@@ -103,13 +105,13 @@ export class GuestDisplayChannel {
       else if (line.startsWith('PROJLIB_DIAGNOSTICS:')) {
         this.diagnostics = new TextDecoder().decode(Uint8Array.from(atob(line.slice('PROJLIB_DIAGNOSTICS:'.length)), character => character.charCodeAt(0)));
       }
-      else if (line.startsWith('PROJLIB_RFB_DATA:')) {
-        const bytes = Uint8Array.from(atob(line.slice('PROJLIB_RFB_DATA:'.length)), character => character.charCodeAt(0));
+      else if (line.startsWith(`PROJLIB_${this.protocolName}_DATA:`)) {
+        const bytes = Uint8Array.from(atob(line.slice(`PROJLIB_${this.protocolName}_DATA:`.length)), character => character.charCodeAt(0));
         this.receivedBytes += bytes.length;
-        if (this.protocolHeader.length < 12) this.protocolHeader += new TextDecoder().decode(bytes.subarray(0, 12 - this.protocolHeader.length));
+        if (this.protocolName === 'RFB' && this.protocolHeader.length < 12) this.protocolHeader += new TextDecoder().decode(bytes.subarray(0, 12 - this.protocolHeader.length));
         if (this.onmessage) this.onmessage({ data: bytes.buffer });
         else { if (this.incoming.length >= 64) throw new Error('The local display did not attach.'); this.incoming.push(bytes); }
-      } else if (line === 'PROJLIB_RFB_CLOSED') this.close();
+      } else if (line === `PROJLIB_${this.protocolName}_CLOSED`) this.close();
       else if (this.readyState !== 1) this.bootText = (this.bootText + line + '\n').slice(-20000);
     }
   }

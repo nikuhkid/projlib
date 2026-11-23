@@ -72,3 +72,17 @@ test('adjacent key press and release share one guest serial record without retai
   assert.deepEqual([...decoded], [4,1,0,0,0,0,0,47,4,0,0,0,0,0,0,47]);
   channel.consume('PROJLIB_RFB_INPUT_ACK\n'); channel.close();
 });
+
+test('the local CDP display keeps private protocol contents out of boot evidence', async () => {
+  const sent = [], received = [];
+  const channel = new GuestDisplayChannel(record => sent.push(record), { protocol: 'CDP', maxRecordBytes: 2*1024*1024 });
+  channel.onmessage = event => received.push(new TextDecoder().decode(event.data));
+  channel.consume('boot ready\nPROJLIB_INPUT_ACK_CAPABLE:1\nPROJLIB_CDP_READY\n');
+  const payload = '{"id":1,"result":{"private":"synthetic-private-profile-fixture"}}\n';
+  channel.consume('PROJLIB_CDP_DATA:' + Buffer.from(payload).toString('base64') + '\n');
+  assert.equal(received[0], payload); assert.equal(channel.protocolHeader, ''); assert.equal(channel.bootText, 'boot ready\n');
+  channel.send(new TextEncoder().encode('{"method":"Input.insertText","params":{"text":"synthetic-private-input"}}\n'));
+  await Promise.resolve(); assert(sent[0].startsWith('PROJLIB_CDP_INPUT:'));
+  channel.consume('PROJLIB_CDP_INPUT_ACK\n'); channel.close();
+  assert(!channel.bootText.includes('private'));
+});

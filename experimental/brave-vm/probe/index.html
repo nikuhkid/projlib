@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>ProjLib Brave execution probe</title>
   <link rel="stylesheet" href="/vendor/xterm/css/xterm.css">
-  <style>body{margin:20px;background:#101522;color:#e6edf6;font:15px system-ui}button{font:inherit;padding:8px 14px}#terminal{margin-top:16px;height:75vh}#status{min-height:2em}</style>
+  <style>[hidden]{display:none!important}body{margin:20px;background:#101522;color:#e6edf6;font:15px system-ui}button{font:inherit;padding:8px 14px}#terminal{margin-top:16px;height:75vh}#status{min-height:2em}</style>
 </head>
 <body>
   <h1>Brave execution probe</h1>
@@ -24,6 +24,15 @@
   <button id="save-profile" hidden disabled>Save profile on this device</button>
   <button id="close-profile" hidden disabled>Save and close Brave</button>
   <p id="status" role="status">Waiting to start.</p>
+  <form id="browser-tools" hidden style="display:flex;gap:6px;max-width:1024px;flex-wrap:wrap">
+    <button id="browser-back" type="button" aria-label="Back">←</button>
+    <button id="browser-forward" type="button" aria-label="Forward">→</button>
+    <button id="browser-reload" type="button">Reload</button>
+    <input id="browser-address" aria-label="Address" placeholder="Enter a website address" style="flex:1;min-width:200px;font:inherit">
+    <button type="submit">Go</button>
+    <button id="browser-sync" type="button">Brave Sync</button>
+    <button id="browser-shields" type="button">Shields</button>
+  </form>
   <div id="terminal"></div>
   <div id="desktop" hidden style="width:100%;height:800px;background:black"></div>
   <script src="/vendor/xterm/lib/xterm.js"></script>

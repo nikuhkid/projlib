@@ -6,6 +6,8 @@ const status = document.querySelector('#status');
 const button = document.querySelector('#start');
 const log = window.projlibProbe = { started: false, completed: false, serial: '', errors: [] };
 const desktopMode = new URLSearchParams(location.search).get('desktop') === '1';
+const canvasMode = new URLSearchParams(location.search).get('browserCanvas') === '1';
+const displayMode = desktopMode || canvasMode;
 const diagnosticMode = new URLSearchParams(location.search).get('diagnose') === '1';
 const networkProbe = new URLSearchParams(location.search).get('networkProbe') === '1';
 const storageProbe = new URLSearchParams(location.search).get('storageProbe') === '1';
@@ -13,7 +15,7 @@ const inputProbe = new URLSearchParams(location.search).get('inputProbe') === '1
 const renderProbe = new URLSearchParams(location.search).get('renderProbe') === '1';
 const relayMode = new URLSearchParams(location.search).get('relay') === '1';
 const persistentProfile = storageProbe || new URLSearchParams(location.search).get('profile') === '1';
-const scriptedBoot = desktopMode || diagnosticMode || networkProbe || storageProbe || inputProbe || renderProbe;
+const scriptedBoot = displayMode || diagnosticMode || networkProbe || storageProbe || inputProbe || renderProbe;
 let hostAuthorized = !relayMode;
 if (relayMode) {
   button.disabled = true;
@@ -42,7 +44,7 @@ button.onclick = async () => {
     if (networkProbe && new URLSearchParams(location.search).get('reconnectProbe') === '1') {
       window.projlibContinueNetworkProbe = () => terminal.input('PROJLIB_NETWORK_CONTINUE\n', true);
     }
-    document.querySelector('#terminal').hidden = desktopMode;
+    document.querySelector('#terminal').hidden = displayMode;
     let display;
     if (inputProbe) {
       const { GuestDisplayChannel } = await import('./display.mjs');
@@ -60,11 +62,10 @@ button.onclick = async () => {
         }, 10);
       };
     }
-    if (desktopMode) {
+    if (displayMode) {
       const { GuestDisplayChannel } = await import('./display.mjs');
-      const { default: RFB } = await import('/vendor/novnc/novnc.mjs');
       const target = document.querySelector('#desktop'); target.hidden = false;
-      display = new GuestDisplayChannel(value => terminal.input(value, true));
+      display = new GuestDisplayChannel(value => terminal.input(value, true), canvasMode ? { protocol: 'CDP', maxRecordBytes: 2*1024*1024 } : {});
       const saveButton = document.querySelector('#save-profile');
       const closeButton = document.querySelector('#close-profile');
       saveButton.hidden = !persistentProfile;
@@ -89,7 +90,8 @@ button.onclick = async () => {
           if (close) {
             if (!display.browserStopped) throw new Error('Brave did not confirm that it closed.');
             clearInterval(autoSaveTimer); log.profileClosed = true;
-            window.projlibDisplay.viewOnly = true;
+            if (window.projlibDisplay) window.projlibDisplay.viewOnly = true;
+            if (window.projlibBrowserCanvas) window.projlibBrowserCanvas.closed = true;
             window.projlibRelayTransport?.close();
           }
           status.textContent = close ? 'Brave is closed and its profile is saved. You can close this tab.' : 'Profile saved on this device.';
@@ -98,6 +100,33 @@ button.onclick = async () => {
       saveButton.onclick = () => window.saveProjlibProfile().catch(error => { status.textContent = error.message; });
       closeButton.onclick = () => window.saveProjlibProfile({ close: true }).catch(error => { status.textContent = error.message; });
       window.projlibChannel = display;
+      if (canvasMode) {
+        const { BrowserCanvas } = await import('./browser-canvas.mjs');
+        const tools = document.querySelector('#browser-tools'); tools.hidden = false;
+        for (const button of tools.querySelectorAll('button')) button.disabled = true;
+        const address = document.querySelector('#browser-address'); let editing = false;
+        const fail = error => { log.browserCanvasError = error.message; status.textContent = error.message; };
+        const browser = window.projlibBrowserCanvas = new BrowserCanvas(display, target, {
+          onReady: () => { log.displayConnected = true; status.textContent = 'Local Brave is ready.'; for (const button of tools.querySelectorAll('button')) button.disabled = false; },
+          onNavigate: url => { if (!editing && document.activeElement !== address) address.value = url; }, onError: fail
+        });
+        address.oninput = () => { editing = true; };
+        const navigate = url => { editing = false; address.blur(); browser.navigate(url).catch(fail); };
+        tools.onsubmit = event => {
+          event.preventDefault(); let value = address.value.trim();
+          if (!value) return;
+          if (!/^(https?:|brave:|chrome:|about:)/i.test(value)) value = value.includes('.') ? 'https://' + value : 'https://search.brave.com/search?q=' + encodeURIComponent(value);
+          navigate(value);
+        };
+        document.querySelector('#browser-back').onclick = () => browser.history(-1).catch(fail);
+        document.querySelector('#browser-forward').onclick = () => browser.history(1).catch(fail);
+        document.querySelector('#browser-reload').onclick = () => browser.call('Page.reload').catch(fail);
+        document.querySelector('#browser-sync').onclick = () => navigate('brave://settings/braveSync');
+        document.querySelector('#browser-shields').onclick = () => navigate('brave://settings/shields');
+        const closed = display.onclose;
+        display.onclose = event => { closed?.(event); clearInterval(autoSaveTimer); };
+      } else {
+      const { default: RFB } = await import('/vendor/novnc/novnc.mjs');
       window.projlibDisplay = new RFB(target, display);
       window.projlibDisplay.scaleViewport = true;
       window.projlibDisplay.addEventListener('connect', () => {
@@ -106,6 +135,7 @@ button.onclick = async () => {
       });
       window.projlibDisplay.addEventListener('disconnect', event => { log.displayDisconnect = event.detail; clearInterval(autoSaveTimer); });
       window.projlibDisplay.addEventListener('securityfailure', event => { log.displayFailure = event.detail; });
+      }
       queueMicrotask(() => display.flush());
     }
     const write = terminal.write.bind(terminal);
@@ -218,7 +248,7 @@ button.onclick = async () => {
       };
     });
     if (scriptedBoot) {
-      const [script, helper] = await Promise.all([fetch(renderProbe ? '/guest/render.sh' : inputProbe ? '/guest/input.sh' : storageProbe ? '/guest/storage.sh' : networkProbe ? '/guest/network.sh' : desktopMode ? '/guest/start.sh' : '/guest/diagnose.sh'), desktopMode || storageProbe || inputProbe || renderProbe ? fetch('/engine/guest-helper') : null]);
+      const [script, helper] = await Promise.all([fetch(canvasMode ? '/guest/canvas.sh' : renderProbe ? '/guest/render.sh' : inputProbe ? '/guest/input.sh' : storageProbe ? '/guest/storage.sh' : networkProbe ? '/guest/network.sh' : desktopMode ? '/guest/start.sh' : '/guest/diagnose.sh'), displayMode || storageProbe || inputProbe || renderProbe ? fetch('/engine/guest-helper') : null]);
       if (!script.ok || (helper && !helper.ok)) throw new Error('The guest startup assets are not present in the candidate.');
       window.projlibDesktopAssets = { script: await script.text(), helper: helper ? new Uint8Array(await helper.arrayBuffer()) : null };
       const fonts = await fetch('/guest/fonts.sh');

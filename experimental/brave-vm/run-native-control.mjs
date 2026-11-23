@@ -54,6 +54,17 @@ try {
   }
   if (!rendered) throw new Error('Native Brave did not render the controlled HTML through DevTools.');
   console.log(JSON.stringify({ nativeControlledDomRendered: true, elapsedMs: Date.now()-started, sandboxDisabled: false }));
+  const syncNavigation = await command('Page.navigate', { url: 'chrome://settings/braveSync' }, sessionId);
+  if (syncNavigation.errorText) throw new Error('Native Sync navigation failed.');
+  let syncReady = false;
+  const syncDeadline = Date.now()+30000;
+  while (Date.now()<syncDeadline) {
+    const result = await command('Runtime.evaluate', { expression: `(() => { const roots=[document]; while(roots.length) { for(const element of roots.pop().querySelectorAll('*')) { if(element.tagName.toLowerCase().includes('brave-sync')) return location.pathname.includes('braveSync'); if(element.shadowRoot) roots.push(element.shadowRoot); } } return false; })()`, returnByValue: true }, sessionId);
+    if (result.result?.value === true) { syncReady = true; break; }
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  if (!syncReady) throw new Error('Native Brave Sync component did not initialize.');
+  console.log(JSON.stringify({ nativeSyncUiAvailable: true, syncChainEntered: false, elapsedMs: Date.now()-started }));
   await command('Browser.close').catch(() => {});
 } catch (error) { console.error(error.message); process.exitCode = 1; }
 finally {
