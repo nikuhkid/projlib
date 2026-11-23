@@ -1,0 +1,20 @@
+[package]
+name = "projlib-brave-adblock"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+adblock = { git = "https://github.com/brave/adblock-rust", rev = "1108c61472dd5a29ae56388ee936048c4fe5a69f" }
+serde_json = "1.0"
+
+[profile.release]
+lto = true
+opt-level = "s"
+codegen-units = 1
+panic = "abort"
+strip = true

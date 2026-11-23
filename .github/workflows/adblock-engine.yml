@@ -1,0 +1,35 @@
+name: Build Brave adblock engine candidate
+
+on:
+  push:
+    branches: [work/brave-adblock]
+    paths:
+      - 'rewrite/adblock-engine/**'
+      - '.github/workflows/adblock-engine.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/.local/adblock-target
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare WebAssembly target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Compile Brave engine and ProjLib bridge
+        run: cargo build --manifest-path rewrite/adblock-engine/Cargo.toml --release --target wasm32-unknown-unknown
+      - name: Package candidate
+        run: |
+          mkdir -p .local/adblock-candidate
+          cp .local/adblock-target/wasm32-unknown-unknown/release/projlib_brave_adblock.wasm .local/adblock-candidate/brave-adblock.wasm
+          cp rewrite/adblock-engine/Cargo.lock .local/adblock-candidate/Cargo.lock
+          cargo metadata --manifest-path rewrite/adblock-engine/Cargo.toml --format-version 1 > .local/adblock-candidate/dependencies.json
+          sha256sum .local/adblock-candidate/brave-adblock.wasm > .local/adblock-candidate/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brave-adblock-candidate
+          path: .local/adblock-candidate/
