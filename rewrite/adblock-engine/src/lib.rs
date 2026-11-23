@@ -85,7 +85,7 @@ fn dispatch(value: Value) -> Result<Value, String> {
 #[no_mangle]
 pub extern "C" fn allocate(length: usize) -> *mut u8 {
     if length > 64 * 1024 * 1024 { return std::ptr::null_mut(); }
-    Box::into_raw(vec![0; length].into_boxed_slice()) as *mut u8
+    Box::into_raw(vec![0u8; length].into_boxed_slice()) as *mut u8
 }
 
 #[no_mangle]

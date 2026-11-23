@@ -20,6 +20,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Prepare WebAssembly target
         run: rustup target add wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .local/adblock-target
+          key: brave-adblock-${{ runner.os }}-${{ hashFiles('rewrite/adblock-engine/Cargo.lock') }}
       - name: Compile Brave engine and ProjLib bridge
         run: cargo build --manifest-path rewrite/adblock-engine/Cargo.toml --release --target wasm32-unknown-unknown
       - name: Package candidate
