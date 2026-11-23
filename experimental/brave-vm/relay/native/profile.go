@@ -107,16 +107,23 @@ func readProfile(home, archiveName string) error {
         if copyErr != nil { return copyErr }; return closeErr
     })
     if err != nil { return err }
-    type replacement struct { destination, backup string; hadPrevious bool }
+    type replacement struct { destination, backup string; hadPrevious, hadEmpty bool }
     committed := []replacement{}
-    rollback := func() { for index := len(committed)-1; index >= 0; index-- { item := committed[index]; _ = os.RemoveAll(item.destination); if item.hadPrevious { _ = os.Rename(item.backup, item.destination) } } }
+    rollback := func() { for index := len(committed)-1; index >= 0; index-- { item := committed[index]; _ = os.RemoveAll(item.destination); if item.hadPrevious { _ = os.Rename(item.backup, item.destination) } else if item.hadEmpty { _ = os.MkdirAll(item.destination, 0700) } } }
     for _, item := range []struct{ source, destination string }{{"profile", "profile"}, {"font-cache", ".cache/fontconfig"}} {
         source := filepath.Join(stage, item.source)
         if _, err := os.Stat(source); errors.Is(err, os.ErrNotExist) { continue } else if err != nil { rollback(); return err }
         destination := filepath.Join(home, item.destination)
         if err := os.MkdirAll(filepath.Dir(destination), 0700); err != nil { rollback(); return err }
         previous := replacement{destination: destination, backup: filepath.Join(stage, ".previous-"+item.source)}
-        if err := os.Rename(destination, previous.backup); err == nil { previous.hadPrevious = true } else if !errors.Is(err, os.ErrNotExist) { rollback(); return err }
+        if err := os.Rename(destination, previous.backup); err == nil { previous.hadPrevious = true } else if !errors.Is(err, os.ErrNotExist) {
+            // OverlayFS can refuse renaming the image's empty lower directory.
+            // Remove only that empty placeholder; retain any nonempty profile.
+            entries, readErr := os.ReadDir(destination)
+            if readErr != nil || len(entries) != 0 { rollback(); return err }
+            if removeErr := os.Remove(destination); removeErr != nil { rollback(); return removeErr }
+            previous.hadEmpty = true
+        }
         committed = append(committed, previous)
         if err := os.Rename(source, destination); err != nil { rollback(); return err }
     }
