@@ -2,7 +2,7 @@ name: Build Brave adblock engine candidate
 
 on:
   push:
-    branches: [work/brave-adblock]
+    branches: [work/brave-adblock, work/blocker-controls]
     paths:
       - 'rewrite/adblock-engine/**'
       - '.github/workflows/adblock-engine.yml'
