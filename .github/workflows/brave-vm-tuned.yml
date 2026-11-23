@@ -1,0 +1,64 @@
+name: Build Brave translator comparison
+
+on:
+  push:
+    branches: [experiment/brave-wasm]
+    paths:
+      - 'experimental/brave-vm/translator/**'
+      - '.github/workflows/brave-vm-tuned.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brave-vm-tuned-candidate
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned converter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .local/brave-vm-tuned/tools .local/brave-vm-tuned/output
+          git clone --depth 1 --branch v0.8.5 https://github.com/container2wasm/container2wasm.git .local/brave-vm-tuned/upstream
+          test "$(git -C .local/brave-vm-tuned/upstream rev-parse HEAD)" = 087c313479d51cdf255e4f28ded6ae7d8141297b
+          gh release download v0.8.5 --repo container2wasm/container2wasm --pattern container2wasm-v0.8.5-linux-amd64.tar.gz --pattern SHA256SUMS --dir .local/brave-vm-tuned/tools
+          cd .local/brave-vm-tuned/tools
+          grep 'container2wasm-v0.8.5-linux-amd64.tar.gz$' SHA256SUMS | sha256sum --check
+          tar -xzf container2wasm-v0.8.5-linux-amd64.tar.gz
+      - name: Prepare guarded translator comparison
+        run: |
+          python3 experimental/brave-vm/translator/tune.py .local/brave-vm-tuned/upstream/Dockerfile .local/brave-vm-tuned/Dockerfile.tuned
+          cp experimental/brave-vm/translator/tune.py .local/brave-vm-tuned/output/
+          cp .local/brave-vm-tuned/Dockerfile.tuned .local/brave-vm-tuned/output/
+          printf '%s\n' '{"qemuRevision":"8604ed49a3cde392890b014a8d5a959c8a2fe72a","baselineThreshold":1500,"candidateThreshold":100,"baselineInstanceLimit":15000,"candidateInstanceLimit":60000}' > .local/brave-vm-tuned/output/translator-tuning.json
+      - name: Build the same official Brave guest
+        run: docker build --platform linux/amd64 --tag projlib-brave-vm:tuned experimental/brave-vm/guest
+      - name: Compile translator comparison
+        run: |
+          .local/brave-vm-tuned/tools/c2w --to-js --assets .local/brave-vm-tuned/upstream --dockerfile .local/brave-vm-tuned/Dockerfile.tuned \
+            --build-arg VM_MEMORY_SIZE_MB=1536 --build-arg VM_CORE_NUMS=2 \
+            --build-arg QEMU_MIGRATION=false --build-arg INIT_DEBUG=false \
+            --build-arg LINUX_LOGLEVEL=4 --build-arg NO_VMTOUCH=true \
+            projlib-brave-vm:tuned .local/brave-vm-tuned/output/
+      - name: Record candidate inputs
+        run: |
+          cp experimental/brave-vm/guest/Dockerfile .local/brave-vm-tuned/output/Guest-Dockerfile
+          cp experimental/brave-vm/guest/start.sh .local/brave-vm-tuned/output/guest-start.sh
+          git rev-parse HEAD > .local/brave-vm-tuned/output/projlib-revision.txt
+          git -C .local/brave-vm-tuned/upstream rev-parse HEAD > .local/brave-vm-tuned/output/converter-revision.txt
+          docker image inspect projlib-brave-vm:tuned > .local/brave-vm-tuned/output/guest-image.json
+          find .local/brave-vm-tuned/output -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > .local/brave-vm-tuned/output/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brave-vm-tuned-engine-candidate
+          path: .local/brave-vm-tuned/output/
+          if-no-files-found: error
+          retention-days: 7
