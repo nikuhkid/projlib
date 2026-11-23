@@ -24,10 +24,12 @@ jobs:
         run: docker build --platform linux/amd64 --tag projlib-brave-native:control experimental/brave-vm/guest
       - name: Render the same controlled HTML with the browser sandbox enabled
         run: node experimental/brave-vm/run-native-control.mjs
+      - name: Check the interpreter-only comparison with native Sync
+        run: PROJLIB_NATIVE_JITLESS=1 node experimental/brave-vm/run-native-control.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: brave-native-render-control
-          path: native-control.txt
+          path: native-control*.txt
           if-no-files-found: ignore
           retention-days: 7

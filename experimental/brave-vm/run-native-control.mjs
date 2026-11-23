@@ -7,11 +7,12 @@ import { resolve } from 'node:path';
 if (process.platform !== 'linux' || !process.env.GITHUB_ACTIONS) throw new Error('Run this diagnostic only in its disposable Linux CI job.');
 const name = 'projlib-native-' + randomBytes(8).toString('hex');
 const port = 9222;
+const jitless = process.env.PROJLIB_NATIVE_JITLESS === '1';
 let logs = '', socket; const started = Date.now();
 const child = spawn('docker', ['run', '--rm', '--name', name, '--network=host', '--cap-add=SYS_ADMIN',
   '--security-opt', 'seccomp=unconfined', '--volume', `${resolve('experimental/brave-vm/desktop')}:/probe:ro`,
   '--entrypoint', '/bin/sh', 'projlib-brave-native:control', '-c',
-  `. /probe/fonts.sh; exec env -u DISPLAY dbus-run-session -- brave-browser --headless=new --disable-gpu --disable-dev-shm-usage --no-first-run --no-default-browser-check --user-data-dir="$HOME/profile" --remote-debugging-address=127.0.0.1 --remote-debugging-port=${port} about:blank`],
+  `. /probe/fonts.sh; exec env -u DISPLAY dbus-run-session -- brave-browser --headless=new ${jitless ? '--js-flags=--jitless' : ''} --disable-gpu --disable-dev-shm-usage --no-first-run --no-default-browser-check --user-data-dir="$HOME/profile" --remote-debugging-address=127.0.0.1 --remote-debugging-port=${port} about:blank`],
   { stdio: ['ignore', 'pipe', 'pipe'] });
 for (const stream of [child.stdout, child.stderr]) stream.on('data', bytes => { logs = (logs + bytes.toString()).slice(-50000); });
 let sequence = 0; const pending = new Map();
@@ -53,7 +54,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
   if (!rendered) throw new Error('Native Brave did not render the controlled HTML through DevTools.');
-  console.log(JSON.stringify({ nativeControlledDomRendered: true, elapsedMs: Date.now()-started, sandboxDisabled: false }));
+  console.log(JSON.stringify({ nativeControlledDomRendered: true, elapsedMs: Date.now()-started, sandboxDisabled: false, jitless }));
   const syncNavigation = await command('Page.navigate', { url: 'chrome://settings/braveSync' }, sessionId);
   if (syncNavigation.errorText) throw new Error('Native Sync navigation failed.');
   let syncReady = false;
@@ -64,13 +65,13 @@ try {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
   if (!syncReady) throw new Error('Native Brave Sync component did not initialize.');
-  console.log(JSON.stringify({ nativeSyncUiAvailable: true, syncChainEntered: false, elapsedMs: Date.now()-started }));
+  console.log(JSON.stringify({ nativeSyncUiAvailable: true, syncChainEntered: false, elapsedMs: Date.now()-started, jitless }));
   await command('Browser.close').catch(() => {});
 } catch (error) { console.error(error.message); process.exitCode = 1; }
 finally {
   for (const waiter of pending.values()) { clearTimeout(waiter.timer); waiter.reject(new Error('The disposable control ended.')); }
   socket?.close();
   await promisify(execFile)('docker', ['rm', '--force', name]).catch(() => {});
-  await writeFile('native-control.txt', logs);
+  await writeFile(jitless ? 'native-control-jitless.txt' : 'native-control.txt', logs);
   console.log(logs.slice(-6000));
 }

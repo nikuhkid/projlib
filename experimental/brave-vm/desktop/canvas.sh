@@ -5,7 +5,10 @@ export HOME=/home/browser
 . /.vm/fonts.sh
 printf 'PROJLIB_BRAVE_VERSION='
 brave-browser --version
+set --
+if [ "${PROJLIB_JITLESS:-0}" = 1 ]; then set -- --js-flags=--jitless; fi
 env -u DISPLAY dbus-run-session -- brave-browser --headless=new --disable-gpu \
+    "$@" \
     --disable-dev-shm-usage --no-first-run --no-default-browser-check \
     --user-data-dir="$HOME/profile" --remote-debugging-address=127.0.0.1 \
     --remote-debugging-port=9222 --remote-allow-origins=http://localhost \

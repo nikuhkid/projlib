@@ -16,7 +16,7 @@ import (
 func connectGuestDevTools() (*websocket.Conn, error) {
     if err := guestProfileGuard(); err != nil { return nil, err }
     // Full CPU emulation can spend several seconds handling the first internal
-    // HTTP request. A two-second timeout repeatedly aborted a cold endpoint.
+    // HTTP request. A two-second timeout can abort before a cold endpoint answers.
     client := &http.Client{Timeout: 15*time.Second}
     deadline := time.Now().Add(10*time.Minute)
     var version struct { WebSocketDebuggerURL string `json:"webSocketDebuggerUrl"` }
