@@ -1,0 +1,10 @@
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/brave/adblock-rust?rev=1108c61472dd5a29ae56388ee936048c4fe5a69f"]
+git = "https://github.com/brave/adblock-rust"
+rev = "1108c61472dd5a29ae56388ee936048c4fe5a69f"
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = ".local/adblock-vendor"

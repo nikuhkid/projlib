@@ -2,7 +2,8 @@
 
 ProjLib is a public, themed website directory and web-proxy console. Pick a site from one of six categories or enter an HTTP(S) address. The selected page opens inside the console. The original project name, directory, eight themes, and artwork are preserved.
 
-- **Proxy Mode:** the rewriting viewer renders websites in the visitor's browser and relays HTTP/WebSocket traffic through Cloudflare. See [rewriting.md](docs/rewriting.md) for verification, compatibility limits and storage behavior. The separate rewriting component is AGPL-3.0-only, with downloadable source and dependency notices linked from the viewer.
+- **Proxy Mode:** the rewriting viewer renders websites in the visitor's browser and uses Cloudflare as its entry point, with optional password-verified [Wolfie home routing](docs/home-proxy.md). See [rewriting.md](docs/rewriting.md) for verification, compatibility limits and storage behavior. The separate rewriting component is AGPL-3.0-only, with downloadable source and dependency notices linked from the viewer.
+- **Brave ad blocking:** Brave's actual adblock-rust engine, default filter bundles, resources, scriptlets and cosmetic executor run locally for either proxy route. Scanner offers Standard, Aggressive and Off for this site. See [adblocking.md](docs/adblocking.md) for the integration, pinned filter snapshot and validation limits.
 - **Direct Mode:** opens the destination directly in the iframe. Sites that forbid embedding will refuse to appear.
 - **Controls:** address bar (Scanner), Home, Refresh, Fullscreen, themes, Open original, Open proxy in tab, Back/Forward, and Clear browsing data. The remote-browser fallback also provides browser tabs, Keyboard, and End session.
 - **Entrance:** complete Breach Protocol or use the existing access key before the console starts. Any Access Denied response redirects to Google after 1.5 seconds; there is no circuit fallback. The password is represented by its PBKDF2 verifier. See [access-gate.md](docs/access-gate.md).
@@ -10,7 +11,7 @@ ProjLib is a public, themed website directory and web-proxy console. Pick a site
 
 The interface is hosted on **GitHub Pages** at <https://nikuhkid.github.io/projlib/>. The proxy runs separately on **Cloudflare Workers**: Pages serves static files and cannot run a proxy backend.
 
-The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. After the entrance is passed, the console starts in Direct Mode with Scanner closed. Scanner reveals the address bar and the unchecked Proxy Mode switch. Proxy routing is an explicit choice for that visit. Cloudflare authorization is only needed to administer deployments. Rewriting runs through Cloudflare. The optional remote-browser fallback requires Wolfie's browser host.
+The interface uses <https://projlib-proxy.fabmigfarcos.workers.dev> as its gateway. After the entrance is passed, the console starts in Direct Mode with Scanner closed. Scanner reveals the address bar and the unchecked Proxy Mode switch. Proxy routing is an explicit choice for that visit. Cloudflare authorization is only needed to administer deployments. The optional home connection uses Wolfie for destination requests after host-password verification; the existing Cloudflare route remains available. The separate remote-browser fallback requires Wolfie's browser host.
 
 ## Browser sessions
 

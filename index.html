@@ -114,6 +114,9 @@
         </form>
         <button id="forgetHost" type="button" hidden>Forget verification</button>
         <p id="homeRoutingStatus" role="status"></p>
+        <label for="adblockMode">Brave ad blocking</label>
+        <select id="adblockMode" disabled><option value="standard">Standard</option><option value="aggressive">Aggressive</option><option value="off">Off for this site</option></select>
+        <p id="adblockStatus" role="status">Starting Brave ad blocking…</p>
       </section>
     </div>
 
@@ -176,7 +179,7 @@
   <script src="js/core.js?v=5" defer></script>
   <script src="js/ui.js?v=4" defer></script>
   <script src="js/browser-session.js?v=2" defer></script>
-  <script src="js/home-routing.js?v=1" defer></script>
+  <script src="js/home-routing.js?v=2" defer></script>
   <script src="js/apps.js?v=7" defer></script>
 </body>
 </html>

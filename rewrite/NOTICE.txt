@@ -2,7 +2,8 @@ ProjLib rewriting component
 Copyright (C) 2026 Niku / nikuhkid
 Licensed under GNU AGPL version 3 only, without warranty.
 
-The AGPL component consists of rewrite/ and scripts/build-rewrite.mjs.
+The AGPL component consists of rewrite/, scripts/build-rewrite.mjs and
+scripts/update-brave-inputs.mjs.
 The HTTP/WebSocket gateway is a separately deployed server program.
 Other ProjLib files retain the terms in the root LICENSE.
 
@@ -27,3 +28,34 @@ Their complete licence notices accompany the deployed files under vendor/.
 The source page links downloadable copies of this component, the build
 instructions, and the complete upstream Scramjet source, including the
 Rust/WebAssembly rewriter. No account is required for these downloads.
+
+Brave ad blocking, integrated on 23 November 2026:
+Brave adblock-rust 0.13.6, MPL-2.0, unmodified engine source revision
+1108c61472dd5a29ae56388ee936048c4fe5a69f.
+https://github.com/brave/adblock-rust
+The thin WebAssembly ABI is ProjLib code under rewrite/adblock-engine/.
+The complete engine and Rust dependency sources and licences accompany
+the bundle in adblock/vendor/dependencies-source.tar.gz. Rust standard
+library MIT/Apache notices and compiler information accompany the binary.
+
+Brave's original content_cosmetic.ts and procedural_filters.ts are MPL-2.0.
+Source revision 89d7419b40e907125dc4713e81cd4af4211beb71, Copyright the
+Brave Authors. ProjLib supplies the renderer messaging and stylesheet adapter.
+The preprocessing function is extracted unchanged from the accompanying
+brave-packager-original.js, MPL-2.0, source revision
+92d922f0a6570828603f8df70a2b35299d9b7999.
+
+Brave's default ad, privacy and first-party list catalogue is pinned at
+b84ad0fd6663a88c1402bc06a4abd5ab8be8fb3c, with list contents from its
+mirror revision fe6a274730b345ed91ff45c5c72a411b371dd0ef.
+Original filter texts retain their notices in adblock/vendor/filter-sources/.
+The manifest records their original URLs, mirrored URLs and checksums.
+
+Brave's scriptlet/resource source, MPL-2.0, is provided in
+adblock/vendor/brave-resources-source.tar.gz. Its uBlock Origin resources
+are GPL-3.0-or-later, Copyright Raymond Hill and contributors, using Brave's
+fork revision cfa955fa8e1732e895e59fc6b8014e2317695ff3. Complete corresponding
+source is in adblock/vendor/ublock-source.tar.gz, with the GPL text alongside.
+Filter-list authors retain the licences and credits in their original texts.
+
+This integration uses Brave components; ProjLib is not the Brave browser.

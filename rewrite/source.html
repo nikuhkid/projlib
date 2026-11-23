@@ -12,11 +12,16 @@
   <ul>
     <li><a href="/rewrite/source/projlib-rewrite-source.tar.gz">ProjLib adaptations and build instructions</a></li>
     <li><a href="/rewrite/source/scramjet-57ba89e.tar.gz">Complete upstream Scramjet source, including the WebAssembly rewriter</a></li>
+    <li><a href="/rewrite/adblock/vendor/dependencies-source.tar.gz">Brave blocking engine and Rust dependency sources with licences</a></li>
+    <li><a href="/rewrite/adblock/vendor/ublock-source.tar.gz">Complete uBlock resource and scriptlet source</a></li>
+    <li><a href="/rewrite/adblock/vendor/brave-resources-source.tar.gz">Brave resource source</a></li>
+    <li><a href="/rewrite/adblock/vendor/manifest.json">Brave component revisions, original filter sources and checksums</a></li>
     <li><a href="/rewrite/LICENSE">GNU AGPL version 3</a></li>
     <li><a href="/rewrite/NOTICE.txt">Dependency notices and modifications</a></li>
     <li><a href="/rewrite/source/manifest.json">Source revision and checksums</a></li>
     <li><a href="https://github.com/nikuhkid/projlib/tree/main/rewrite">Source repository</a></li>
   </ul>
   <p>Extract the adaptations archive and run <code>npm ci --ignore-scripts</code>, then <code>npm run build:rewrite</code> with Node.js 22 or later and tar available. The resulting browser assets are in <code>.local/rewrite-assets/</code>. The included README describes the source layout and upstream build.</p>
+  <p>The archive includes the readable WebAssembly bridge and its Cargo lockfile under <code>rewrite/adblock-engine/</code>, and Brave's original cosmetic source under <code>rewrite/adblock/vendor/</code>. Build the bridge with Rust and the <code>wasm32-unknown-unknown</code> target, or use the repository's isolated engine build workflow. The recorded compiler and vendored dependency sources accompany the binary. Normal frontend builds use the checked-in, verified engine and filter snapshot.</p>
 </body>
 </html>

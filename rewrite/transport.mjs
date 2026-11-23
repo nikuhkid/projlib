@@ -21,24 +21,36 @@ export default class WorkerTransport {
   connect(url, protocols, headers, onopen, onmessage, onclose, onerror) {
     const endpoint = new URL(`${this.base}/socket`);
     endpoint.protocol = endpoint.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(endpoint);
-    socket.binaryType = 'arraybuffer';
+    let socket;
+    let closed = false;
     let opened = false;
-    socket.onopen = () => socket.send(JSON.stringify({ url: url.href, protocols, headers }));
-    socket.onmessage = event => {
-      if (!opened) {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type !== 'open') throw new Error('Invalid proxy handshake.');
-          opened = true;
-          onopen(message.protocol);
-        } catch { onerror('Invalid proxy WebSocket handshake.'); socket.close(); }
-        return;
-      }
-      onmessage(event.data);
+    const start = async () => {
+      const source = Object.entries(headers || {}).find(([name]) => ['origin', 'referer'].includes(name.toLowerCase()))?.[1]
+        || url.href.replace(/^ws/, 'http');
+      const check = await fetch(`${this.base}/adblock/socket`, { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: url.href, source }) });
+      if (!check.ok) throw new Error('Brave ad blocking could not check this WebSocket.');
+      if ((await check.json()).blocked) throw new Error('This WebSocket was blocked by Brave ad blocking.');
+      if (closed) return;
+      socket = new WebSocket(endpoint);
+      socket.binaryType = 'arraybuffer';
+      socket.onopen = () => socket.send(JSON.stringify({ url: url.href, protocols, headers }));
+      socket.onmessage = event => {
+        if (!opened) {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type !== 'open') throw new Error('Invalid proxy handshake.');
+            opened = true;
+            onopen(message.protocol);
+          } catch { onerror('Invalid proxy WebSocket handshake.'); socket.close(); }
+          return;
+        }
+        onmessage(event.data);
+      };
+      socket.onclose = event => onclose(event.code, event.reason);
+      socket.onerror = () => onerror('The proxy WebSocket connection failed.');
     };
-    socket.onclose = event => onclose(event.code, event.reason);
-    socket.onerror = () => onerror('The proxy WebSocket connection failed.');
-    return [data => socket.send(data), (code, reason) => socket.close(code === 1000 || code >= 3000 ? code : 1000, reason)];
+    start().catch(error => { if (!closed) { onerror(error.message); onclose(1008, error.message); } });
+    return [data => socket.send(data), (code, reason) => { closed = true; socket?.close(code === 1000 || code >= 3000 ? code : 1000, reason); }];
   }
 }

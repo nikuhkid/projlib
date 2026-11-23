@@ -8,6 +8,8 @@
     const verify = document.getElementById('verifyHost');
     const forget = document.getElementById('forgetHost');
     const status = document.getElementById('homeRoutingStatus');
+    const adblockMode = document.getElementById('adblockMode');
+    const adblockStatus = document.getElementById('adblockStatus');
     let state = { configured: false, authorized: false, route: 'cloudflare', expiresAt: 0 };
     let expiry;
     function command(action, values = {}) {
@@ -38,6 +40,17 @@
         status.textContent = event.data.message;
         route.value = state.route;
       }
+      if (event.data?.type === 'projlib:blocker-state') {
+        const blocker = event.data.state;
+        adblockMode.disabled = !blocker.available;
+        adblockMode.value = blocker.mode;
+        adblockStatus.textContent = blocker.mode === 'off' ? 'Ad blocking is off for this site.'
+          : `Brave engine · ${blocker.blocked} requests blocked for this site this session.`;
+      }
+      if (event.data?.type === 'projlib:blocker-error') {
+        adblockMode.disabled = true;
+        adblockStatus.textContent = event.data.message;
+      }
     });
     form.addEventListener('submit', event => {
       event.preventDefault();
@@ -48,7 +61,11 @@
     });
     route.addEventListener('change', () => command('home-route', { route: route.value }));
     forget.addEventListener('click', () => command('home-logout'));
+    adblockMode.addEventListener('change', () => {
+      adblockMode.disabled = true;
+      command('blocker-mode', { mode: adblockMode.value });
+    });
     render(state);
-    return { show(enabled) { panel.hidden = !enabled; }, ready() { command('home-status'); } };
+    return { show(enabled) { panel.hidden = !enabled; }, ready() { command('home-status'); command('blocker-status'); } };
   };
 })();

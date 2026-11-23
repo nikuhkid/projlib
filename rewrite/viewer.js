@@ -41,8 +41,39 @@
       });
     }
     const connection = new BareMux.BareMuxConnection('/rewrite/vendor/baremux/worker.js');
-    await connection.setTransport('/rewrite/transport.mjs?v=2', [location.origin + '/rewrite']);
+    await connection.setTransport('/rewrite/transport.mjs?v=3', [location.origin + '/rewrite']);
     frame = controller.createFrame(element);
+    let blockerPoll;
+    async function blockerControl(action = 'status', mode) {
+      try {
+        let url;
+        try { url = target(frame.url.href); } catch { url = target(); }
+        if (!url) return;
+        const result = await new Promise((resolve, reject) => {
+          const channel = new MessageChannel();
+          const timer = setTimeout(() => { channel.port1.close(); reject(new Error('Brave ad blocking did not respond.')); }, 30000);
+          channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data); };
+          navigator.serviceWorker.controller.postMessage({ type: 'projlib:blocker-' + action, url, mode }, [channel.port2]);
+        });
+        if (result.error) throw new Error(result.error);
+        const state = result.state;
+        if (parent === window) {
+          document.getElementById('blockerMode').disabled = !state.available;
+          document.getElementById('blockerMode').value = state.mode;
+          document.getElementById('blockerStatus').textContent = state.mode === 'off' ? 'Ad blocking is off for this site.'
+            : `Brave engine · ${state.blocked} requests blocked for this site this session.`;
+        }
+        send('projlib:blocker-state', { state });
+        if (action === 'mode') frame.reload();
+      } catch (error) {
+        document.getElementById('blockerStatus').textContent = error.message;
+        send('projlib:blocker-error', { message: error.message });
+      } finally {
+        clearTimeout(blockerPoll);
+        blockerPoll = setTimeout(() => blockerControl(), 3000);
+      }
+    }
+    document.getElementById('blockerMode').onchange = event => blockerControl('mode', event.target.value);
     const navigate = value => {
       try {
         const url = target(value);
@@ -119,6 +150,7 @@
       notice.textContent = '';
       try { send('projlib:rewrite-loaded', { url: frame.url.href }); }
       catch { send('projlib:rewrite-loaded'); }
+      blockerControl();
     });
     frame.addEventListener('urlchange', event => send('projlib:navigation', { url: event.url }));
     document.getElementById('back').onclick = () => frame.back();
@@ -132,6 +164,8 @@
       if (event.data.action === 'home-login') homeControl('login', { password: event.data.password });
       if (event.data.action === 'home-route') homeControl('route', { route: event.data.route });
       if (event.data.action === 'home-logout') homeControl('logout');
+      if (event.data.action === 'blocker-status') blockerControl();
+      if (event.data.action === 'blocker-mode') blockerControl('mode', event.data.mode);
     });
     // Clearing the entire proxy origin also clears its service worker's in-memory cookie jar.
     document.getElementById('clear').onclick = () => {

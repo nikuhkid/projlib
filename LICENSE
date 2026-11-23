@@ -1,4 +1,5 @@
-The files under rewrite/ and scripts/build-rewrite.mjs are licensed under
+The files under rewrite/, scripts/build-rewrite.mjs and
+scripts/update-brave-inputs.mjs are licensed under
 the GNU Affero General Public License version 3 only. See rewrite/LICENSE
 and rewrite/NOTICE.txt. Third-party components retain their own licences.
 

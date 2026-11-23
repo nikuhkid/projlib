@@ -18,6 +18,11 @@ test('home routing unlocks once per browser, survives reload, keeps its expiry a
   await page.goto('/projlib/'); await unlockProjLib(page);
   await expect(page.locator('#homeRouting')).toBeHidden();
   await enableProxy(page);
+  await expect(page.locator('#adblockMode')).toBeEnabled();
+  await page.locator('#adblockMode').selectOption('off');
+  await expect(page.locator('#adblockStatus')).toContainText('off for this site');
+  await page.locator('#adblockMode').selectOption('standard');
+  await expect(page.locator('#adblockStatus')).toContainText('Brave engine');
   await expect(page.locator('#verifyHost')).toBeEnabled();
   await expect(page.locator('#proxyRoute option[value="home"]')).toBeDisabled();
   await page.getByLabel('Host password', { exact: true }).fill('wrong-password');

@@ -22,6 +22,8 @@
     <form id="homeForm"><label>Host password <input id="homePassword" type="password" maxlength="256" autocomplete="off" required></label><button id="homeVerify" disabled>Verify host</button></form>
     <button id="homeForget" type="button" hidden>Forget verification</button>
     <p id="homeStatus" role="status"></p>
+    <label>Brave ad blocking <select id="blockerMode" disabled><option value="standard">Standard</option><option value="aggressive">Aggressive</option><option value="off">Off for this site</option></select></label>
+    <p id="blockerStatus" role="status">Starting Brave ad blocking…</p>
   </details>
   <p id="notice" role="status">Starting the website viewer…</p>
   <iframe id="site" title="Proxied website" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" allow="fullscreen" referrerpolicy="no-referrer" hidden></iframe>

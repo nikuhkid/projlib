@@ -1,6 +1,6 @@
 let homeExpires = 0;
-export default {
-  async fetch(request) {
+let adRequests = 0;
+async function fixtureFetch(request) {
     const url = new URL(request.url);
     if (url.hostname === 'home.test') {
       if (request.headers.get('x-projlib-bridge') !== 'fixture-bridge') return new Response('Bridge required', { status: 403 });
@@ -22,10 +22,41 @@ export default {
         return new Response(null, { status: 101, webSocket: pair[0] });
       }
       const metadata = JSON.parse(decodeURIComponent(request.headers.get('x-projlib-request')));
+      const target = new URL(metadata.url);
+      if (target.pathname.startsWith('/adblock') || target.hostname === 'pagead2.googlesyndication.com') {
+        const response = await fixtureFetch(new Request(target, { method: metadata.method, headers: metadata.headers,
+          body: ['GET', 'HEAD'].includes(metadata.method) ? undefined : await request.arrayBuffer() }));
+        return new Response(response.body, { headers: { 'x-projlib-response': encodeURIComponent(JSON.stringify({ status: response.status,
+          statusText: response.statusText, headers: Object.fromEntries(response.headers) })) } });
+      }
       return Response.json({ egress: 'home', method: metadata.method, body: await request.text() }, { headers: {
         'x-projlib-response': encodeURIComponent(JSON.stringify({ status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' } }))
       } });
     }
+    if (url.hostname === 'pagead2.googlesyndication.com') {
+      adRequests++;
+      return new Response('window.adNetworkReached=true;', { headers: { 'content-type': 'text/javascript' } });
+    }
+    if (url.pathname === '/adblock/count') return Response.json({ requests: adRequests });
+    if (url.pathname === '/adblock/ordinary.js') return new Response('window.regularAssetLoaded=true;', { headers: { 'content-type': 'text/javascript' } });
+    if (url.pathname.startsWith('/adblock/tracker')) return new Response('ordinary fixture response');
+    if (url.pathname === '/adblock') return new Response(`<!doctype html><html><head><title>Adblock fixture</title>
+      <script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <script src="/adblock/ordinary.js"></script></head><body><h1>Adblock fixture</h1>
+      <p id="inline"></p><p id="asset"></p><p id="tracker"></p><p id="allowed"></p><p id="requests"></p><p id="blocked-socket"></p>
+      <div id="cosmetic" class="projlib-ad-test">Ad test</div>
+      <div id="generic" class="projlib-generic-ad">Generic ad test</div>
+      <div id="procedural" class="projlib-procedural">SPONSORED TEST</div>
+      <script>
+        document.getElementById('inline').textContent=String(window.projlibAdFixture);
+        document.getElementById('asset').textContent=String(window.regularAssetLoaded);
+        fetch('/adblock/tracker').then(r=>document.getElementById('tracker').textContent=String(r.status));
+        fetch('/adblock/tracker-allowed').then(r=>document.getElementById('allowed').textContent=String(r.status));
+        fetch('/adblock/count').then(r=>r.json()).then(data=>document.getElementById('requests').textContent=String(data.requests));
+        const blockedSocket=new WebSocket('wss://fixture.test/adblock/socket-blocked');
+        blockedSocket.onerror=()=>document.getElementById('blocked-socket').textContent='blocked';
+        blockedSocket.onopen=()=>{document.getElementById('blocked-socket').textContent='connected';blockedSocket.close()};
+      </script></body></html>`, { headers: { 'content-type': 'text/html' } });
     if (request.headers.get('upgrade') === 'websocket') {
       const pair = new WebSocketPair();
       pair[1].accept();
@@ -62,5 +93,5 @@ export default {
         socket.onopen=()=>socket.send('WebSocket echo worked');
         socket.onmessage=e=>{document.querySelector('#socket').textContent=e.data;socket.close()};
       </script></body></html>`, { headers: { 'content-type': 'text/html', 'x-frame-options': 'DENY' } });
-  }
-};
+}
+export default { fetch: fixtureFetch };
