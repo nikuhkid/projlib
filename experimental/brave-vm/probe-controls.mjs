@@ -63,9 +63,16 @@ export async function probeControl(page, directory, input) {
   if (canvasMode && command === 'inspect-settings-load') {
     const state = await page.evaluate(async () => {
       const result = await window.projlibBrowserCanvas.call('Runtime.evaluate', { expression: `({readyState:document.readyState,elementCount:document.querySelectorAll('*').length,scriptCount:document.scripts.length,settingsElement:!!document.querySelector('settings-ui'),settingsUpgraded:!!document.querySelector('settings-ui')?.shadowRoot,resourceCount:performance.getEntriesByType('resource').length})`, returnByValue: true });
-      return result.result?.value;
+      return result.exceptionDetails ? {evaluationFailed:true,exceptionClass:result.exceptionDetails.exception?.className || result.result?.className || 'unknown'} : result.result?.value;
     });
     return 'Native settings initialization counters: ' + JSON.stringify(state);
+  }
+  if (canvasMode && command === 'inspect-settings-script') {
+    const state = await page.evaluate(async () => {
+      const result = await window.projlibBrowserCanvas.call('Runtime.evaluate', { expression: `(async () => { const script=document.scripts[0]; if(!script || !location.pathname.includes('braveSync')) return {settingsPage:false}; const response=await fetch(script.src); const bytes=await response.arrayBuffer(); return {settingsPage:true,status:response.status,bytes:bytes.byteLength,module:script.type==='module'}; })()`, awaitPromise: true, returnByValue: true });
+      return result.exceptionDetails ? {evaluationFailed:true,exceptionClass:result.exceptionDetails.exception?.className || result.result?.className || 'unknown'} : result.result?.value;
+    });
+    return 'Native settings entry script counters: ' + JSON.stringify(state);
   }
   if (canvasMode && command === 'check-home-egress') {
     const expected = (await (await fetch('https://api.ipify.org/')).text()).trim();

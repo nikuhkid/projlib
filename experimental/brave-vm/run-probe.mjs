@@ -135,6 +135,8 @@ try {
   }
   console.log(JSON.stringify({ braveBinaryVersion: result?.serial.match(/Brave Browser [\d.]+/)?.[0] || null,
     controlledDomRendered: Boolean(result?.domRendered), tlsNetworkVerified: Boolean(result?.networkVerified), storageExportVerified: Boolean(result?.storageExportVerified), inputIntegrityVerified: Boolean(result?.inputVerified),
+    nativeBrowserEgressVerified: Boolean(result?.browserEgressVerified), canvasKeyboardVerified: Boolean(result?.canvasFixtureVerified), nativeSyncUiInitialized: Boolean(result?.syncUiVerified),
+    localProfileCheckpointSaved: Boolean(result?.profileSave), browserControlledClose: Boolean(result?.profileClosed),
     localDisplayConnected: Boolean(result?.displayConnected), elapsedMs: Date.now() - started, evidence }));
   if (!result?.completed) process.exitCode = 1;
 } finally { commands.close(); await browser.close(); await server.close(); }
