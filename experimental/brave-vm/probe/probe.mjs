@@ -10,9 +10,10 @@ const diagnosticMode = new URLSearchParams(location.search).get('diagnose') === 
 const networkProbe = new URLSearchParams(location.search).get('networkProbe') === '1';
 const storageProbe = new URLSearchParams(location.search).get('storageProbe') === '1';
 const inputProbe = new URLSearchParams(location.search).get('inputProbe') === '1';
+const renderProbe = new URLSearchParams(location.search).get('renderProbe') === '1';
 const relayMode = new URLSearchParams(location.search).get('relay') === '1';
 const persistentProfile = storageProbe || new URLSearchParams(location.search).get('profile') === '1';
-const scriptedBoot = desktopMode || diagnosticMode || networkProbe || storageProbe || inputProbe;
+const scriptedBoot = desktopMode || diagnosticMode || networkProbe || storageProbe || inputProbe || renderProbe;
 let hostAuthorized = !relayMode;
 if (relayMode) {
   button.disabled = true;
@@ -26,6 +27,7 @@ button.onclick = async () => {
   button.disabled = true;
   try {
     if (!hostAuthorized) throw new Error('Verify Wolfie before starting Brave.');
+    if (renderProbe && persistentProfile) throw new Error('The rendering diagnostic requires a blank disposable profile.');
     if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') throw new Error('The guest requires cross-origin isolation and SharedArrayBuffer.');
     log.started = true;
     let savingStorageFixture = false;
@@ -122,6 +124,13 @@ button.onclick = async () => {
         log.domRendered = true;
         status.textContent = 'Brave executed and rendered the controlled HTML probe.';
       }
+      if (renderProbe && log.serial.includes('PROJLIB_CONTROLLED_DOM_PASS')) {
+        log.completed = true; log.domRendered = true;
+        status.textContent = 'Actual Brave rendered the controlled HTML inside the local guest.';
+      }
+      if (renderProbe && log.serial.includes('PROJLIB_RENDER_PROBE_FAILED')) {
+        log.errors.push('The isolated guest rendering diagnostic failed.');
+      }
       if (networkProbe && log.serial.includes('PROJLIB_TLS_PUBLIC_EGRESS_PASS')) {
         log.completed = true; log.networkVerified = true;
         status.textContent = 'Guest TLS and public egress through the native Wolfie relay passed.';
@@ -209,7 +218,7 @@ button.onclick = async () => {
       };
     });
     if (scriptedBoot) {
-      const [script, helper] = await Promise.all([fetch(inputProbe ? '/guest/input.sh' : storageProbe ? '/guest/storage.sh' : networkProbe ? '/guest/network.sh' : desktopMode ? '/guest/start.sh' : '/guest/diagnose.sh'), desktopMode || storageProbe || inputProbe ? fetch('/engine/guest-helper') : null]);
+      const [script, helper] = await Promise.all([fetch(renderProbe ? '/guest/render.sh' : inputProbe ? '/guest/input.sh' : storageProbe ? '/guest/storage.sh' : networkProbe ? '/guest/network.sh' : desktopMode ? '/guest/start.sh' : '/guest/diagnose.sh'), desktopMode || storageProbe || inputProbe || renderProbe ? fetch('/engine/guest-helper') : null]);
       if (!script.ok || (helper && !helper.ok)) throw new Error('The guest startup assets are not present in the candidate.');
       window.projlibDesktopAssets = { script: await script.text(), helper: helper ? new Uint8Array(await helper.arrayBuffer()) : null };
       const fonts = await fetch('/guest/fonts.sh');

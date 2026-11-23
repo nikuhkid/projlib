@@ -19,11 +19,13 @@ const otherSignedData = -16 >> 3;`;
 });
 
 test('guest poll forwards zero and short deadlines and caps indefinite TTY waits', () => {
-  const original = `function xterm_pty_old_poll(fds, nfds, timeout) { return stream.stream_ops.poll(stream, -1); }\nvar PTY_waitForReadableWithCallback = () => {};`;
-  const deadlines = []; const stream = { stream_ops: { poll: (_stream, timeout) => deadlines.push(timeout) } };
-  const poll = new Function('stream', patchTtyPollTimeout(original) + '\nreturn xterm_pty_old_poll;')(stream);
+  const original = `function xterm_pty_old_poll(fds, nfds, timeout) { let nonzero = stream.stream_ops.poll(stream, -1); return nonzero; }\nvar PTY_waitForReadableWithCallback = () => {};`;
+  const deadlines = [], waits = []; const stream = { stream_ops: { poll: (_stream, timeout) => { deadlines.push(timeout); return 0; } } };
+  const poll = new Function('stream', 'PTY_askToWaitAgain', patchTtyPollTimeout(original) + '\nreturn xterm_pty_old_poll;')(stream, timeout => waits.push(timeout));
   for (const timeout of [0, 5, -1, 1000]) poll(0, 0, timeout);
-  assert.deepEqual(deadlines, [0, 5, 10, 10]);
+  assert.deepEqual(deadlines, [0, 0, 0, 0]); assert.deepEqual(waits, [5, 10, 10]);
+  stream.stream_ops.poll = () => 1; poll(0, 0, 5);
+  assert.equal(waits.length, 3, 'a ready descriptor must prevent a terminal wait');
 });
 
 test('the terminal atomic wait retains high heap addresses as nonnegative indices', () => {

@@ -13,11 +13,25 @@ export class GuestDisplayChannel {
     this.profileCapable = false; this.profileWaiter = null; this.onprofilecapability = null;
     this.closeCapable = false; this.onclosecapability = null;
     this.inputAckCapable = false; this.inputQueue = []; this.inputBytes = 0; this.inputFlight = null;
+    this.batchParts = []; this.batchBytes = 0; this.batchScheduled = false;
   }
   send(data) {
     if (this.readyState !== 1) throw new Error('The local guest display is not connected.');
     const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data;
+    if (this.inputBytes + 2*(this.batchBytes + bytes.length) > 1024*1024) throw new Error('The guest input queue is full.');
     this.sentBytes += bytes.length;
+    // noVNC emits key-down and key-up in separate sends. Keep adjacent events in
+    // one serial record so a slow ACK round-trip cannot turn a tap into a hold.
+    this.batchParts.push(Uint8Array.from(bytes)); this.batchBytes += bytes.length;
+    if (!this.batchScheduled) {
+      this.batchScheduled = true;
+      queueMicrotask(() => { this.batchScheduled = false; if (this.readyState === 1) this.flushInputBatch(); });
+    }
+  }
+  flushInputBatch() {
+    const bytes = new Uint8Array(this.batchBytes); let cursor = 0;
+    for (const part of this.batchParts) { bytes.set(part, cursor); cursor += part.length; }
+    this.batchParts = []; this.batchBytes = 0;
     for (let offset = 0; offset < bytes.length; offset += 256) {
       const encoded = btoa(String.fromCharCode(...bytes.subarray(offset, offset + 256)));
       const record = 'PROJLIB_RFB_INPUT:' + encoded + '\n';
@@ -43,6 +57,7 @@ export class GuestDisplayChannel {
     this.readyState = 3; this.incoming = [];
     if (this.inputFlight) clearTimeout(this.inputFlight.timer);
     this.inputFlight = null; this.inputQueue = []; this.inputBytes = 0;
+    this.batchParts = []; this.batchBytes = 0; this.batchScheduled = false;
     this.finishProfile(new Error('The guest display closed before its profile was saved.'));
     this.onclose?.({ code: 1000, reason: 'Local display closed.' });
   }
@@ -55,7 +70,7 @@ export class GuestDisplayChannel {
       this.profileWaiter = { resolve, reject, timer };
       const sendWhenDrained = () => {
         if (!this.profileWaiter) return;
-        if (this.inputFlight || this.inputQueue.length) { setTimeout(sendWhenDrained, 25); return; }
+        if (this.batchScheduled || this.batchBytes || this.inputFlight || this.inputQueue.length) { setTimeout(sendWhenDrained, 25); return; }
         this.writeInput(close ? 'PROJLIB_VM_CONTROL:close\n' : 'PROJLIB_VM_CONTROL:save\n');
       };
       sendWhenDrained();

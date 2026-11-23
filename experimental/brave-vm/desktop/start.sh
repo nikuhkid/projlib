@@ -28,7 +28,9 @@ done
 printf 'PROJLIB_X11_READY\n'
 openbox >/tmp/openbox.log 2>&1 &
 if command -v xsetroot >/dev/null 2>&1; then xsetroot -solid '#503080'; fi
-x11vnc -display :1 -localhost -forever -shared -nopw -noshm -rfbport 5900 >/tmp/vnc.log 2>&1 &
+# Only the visitor's viewer should generate repeats. The default five-minute
+# idle reset reenabled server repeats during the emulator's long cold startup.
+X11VNC_IDLE_TIMEOUT=2147483647 x11vnc -display :1 -localhost -forever -shared -nopw -noshm -norepeat -1 -rfbport 5900 >/tmp/vnc.log 2>&1 &
 dbus-run-session -- /bin/sh -c '
     export DBUS_SYSTEM_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS"
     exec brave-browser "$@"

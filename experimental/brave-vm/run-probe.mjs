@@ -58,6 +58,7 @@ if (process.argv.includes('--network-probe')) {
 }
 if (process.argv.includes('--storage-probe')) options.set('storageProbe', '1');
 if (process.argv.includes('--input-probe')) options.set('inputProbe', '1');
+if (process.argv.includes('--render-probe')) options.set('renderProbe', '1');
 const directory = resolve('.local/full-browser/evidence');
 await mkdir(directory, { recursive: true });
 const evidence = resolve(directory, `guest-probe-${started}.json`);
@@ -84,29 +85,9 @@ try {
     try {
     if (command.trim() === 'stop') stop = true;
     if (command.trim() === 'snapshot') { const state = await snapshot(); console.log(JSON.stringify({ status: state.status, display: state.display, relay: state.relay, disconnect: state.displayDisconnect, errors: state.errors })); }
-    if (command.trim() === 'screenshot') {
-      await page.screenshot({ path: resolve(directory, 'brave-desktop.png'), fullPage: true });
-      console.log('Saved the local guest display screenshot.');
-    }
-    if (['navigate-sync', 'navigate-example'].includes(command.trim())) {
-      const address = command.trim() === 'navigate-sync' ? 'brave://settings/braveSync/setup' : 'https://example.com/';
-      await page.evaluate(async address => {
-        const display = window.projlibDisplay;
-        if (!display || display._rfbConnectionState !== 'connected') throw new Error('The guest display is not connected.');
-        display.sendKey(0xffe3, 'ControlLeft', true); display.sendKey(0x6c, 'KeyL'); display.sendKey(0xffe3, 'ControlLeft', false);
-        for (const letter of address) { display.sendKey(letter.codePointAt(0)); await new Promise(resolve => setTimeout(resolve, 100)); }
-        display.sendKey(0xff0d, 'Enter');
-      }, address);
-      console.log('Sent the selected fixture address through the guest input channel.');
-    }
-    if (command.trim() === 'save-profile') {
-      await page.evaluate(() => window.saveProjlibProfile());
-      console.log('Saved the actual Brave profile checkpoint on this device.');
-    }
-    if (command.trim() === 'close-profile') {
-      await page.evaluate(() => window.saveProjlibProfile({ close: true }));
-      console.log('Brave closed normally and its final profile checkpoint is saved on this device.');
-    }
+    const { probeControl } = await import('./probe-controls.mjs?revision=' + Date.now());
+    const message = await probeControl(page, directory, command);
+    if (message) console.log(message);
     } catch (error) { console.log('Probe control failed: ' + error.message); }
   });
   page.on('pageerror', error => errors.push(error.message));

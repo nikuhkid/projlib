@@ -44,9 +44,12 @@ export function patchTtyPollTimeout(source) {
   const section = source.slice(start, end);
   const call = 'stream.stream_ops.poll(stream, -1)';
   if (section.split(call).length !== 2) throw new Error('The reviewed PTY poll call differs.');
-  // poll may return early. Bound the TTY wait because its EAGAIN interrupts the
-  // descriptor scan; network and timer descriptors must be revisited promptly.
-  return source.slice(0, start) + section.replace(call, 'stream.stream_ops.poll(stream, timeout < 0 ? 10 : Math.min(timeout, 10))') + source.slice(end);
+  if (section.split('return nonzero;').length !== 2) throw new Error('The reviewed PTY descriptor scan differs.');
+  // Scan every descriptor without blocking first. Otherwise an empty terminal
+  // throws EAGAIN before ready network/event descriptors are ever inspected.
+  const patched = section.replace(call, 'stream.stream_ops.poll(stream, 0)').replace('return nonzero;',
+    'if (nonzero === 0 && timeout !== 0) PTY_askToWaitAgain(timeout < 0 ? 10 : Math.min(timeout, 10));\n    return nonzero;');
+  return source.slice(0, start) + patched + source.slice(end);
 }
 
 export function patchTtyAtomicPointer(source) {

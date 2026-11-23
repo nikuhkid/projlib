@@ -14,7 +14,7 @@ try {
     context = await chromium.launchPersistentContext(profile, { headless: true, chromiumSandbox: true });
     const page = context.pages()[0] || await context.newPage();
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.goto(server.url + '?storageProbe=1');
+    await page.goto(server.url + '?storageProbe=1' + (process.argv.includes('--bounded-io') ? '&io=bounded' : ''));
     await page.locator('#start').click();
     await page.waitForFunction(() => window.projlibProbe?.completed || window.projlibProbe?.errors.length, undefined, { timeout: 150000 });
     const result = await page.evaluate(() => ({ completed: window.projlibProbe.completed,
