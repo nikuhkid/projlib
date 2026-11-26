@@ -16,7 +16,7 @@ test('deployed source downloads match their manifest and include the adaptations
   assert.equal(createHash('sha256').update(bundle).digest('hex'), manifest.checksums['scramjet.all.js']);
   const run = promisify(execFile);
   const own = (await run('tar', ['-tzf', `${root}/source/projlib-rewrite-source.tar.gz`])).stdout;
-  for (const path of ['rewrite/LICENSE', 'rewrite/cookie-store.js', 'rewrite/storage.js', 'scripts/build-rewrite.mjs', 'package-lock.json']) assert.ok(own.includes(path), path);
+  for (const path of ['rewrite/LICENSE', 'rewrite/cookie-store.js', 'rewrite/storage.js', 'rewrite/scramjet-compat.js', 'scripts/build-rewrite.mjs', 'package-lock.json']) assert.ok(own.includes(path), path);
   assert.ok(!own.includes('browser-host-key'));
   const upstream = (await run('tar', ['-tzf', `${root}/source/scramjet-57ba89e.tar.gz`])).stdout;
   assert.ok(upstream.includes('/rewriter/wasm/src/lib.rs'));

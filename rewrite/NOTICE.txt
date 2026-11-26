@@ -17,6 +17,9 @@ Modified on 4 November 2026 for ProjLib. The build replaces the cookie and
 storage modules, makes response-cookie notifications asynchronous, persists
 response cookies, and preserves directory separators in encoded URLs.
 Readable adaptations and guarded build changes are in the source download.
+Modified on 26 November 2026 to correct the Google-domain indirect-eval
+factory. Google pages use the ordinary native-eval path instead of returning
+an unevaluated function. The guarded adaptation is in scramjet-compat.js.
 The source offer is displayed below the website iframe in the standalone
 viewer, and below the embedded viewer in the ProjLib console.
 

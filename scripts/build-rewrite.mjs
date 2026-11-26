@@ -5,6 +5,7 @@ import { build } from 'esbuild';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { patchGoogleIndirectEval } from '../rewrite/scramjet-compat.js';
 
 const root = resolve('.local/rewrite-assets/rewrite');
 await mkdir(root, { recursive: true });
@@ -71,6 +72,7 @@ const storage = await build({ entryPoints: ['rewrite/storage.js'], bundle: true,
   platform: 'browser', format: 'iife', globalName: 'ProjLibStorage', target: 'chrome120' });
 bundle = bundle.slice(0, storageStart) + '5289:function(e,t,r){\n' + storage.outputFiles[0].text +
   '\nr.r(t);r.d(t,{default:()=>ProjLibStorage.installStorage});' + bundle.slice(storageEnd);
+bundle = patchGoogleIndirectEval(bundle);
 bundle = bundle.replace('//# sourceMappingURL=scramjet.all.js.map', '');
 await writeFile(filename, bundle);
 await cp('node_modules/tough-cookie/LICENSE', `${root}/vendor/tough-cookie-LICENSE`);
@@ -104,7 +106,7 @@ await writeFile(`${sourceRoot}/README.md`, `# ProjLib rewriting source
 
 The rewriting component under rewrite/, scripts/build-rewrite.mjs and scripts/update-brave-inputs.mjs is AGPL-3.0-only. See rewrite/LICENSE and rewrite/NOTICE.txt. The root LICENSE describes the separate ProjLib programs. Third-party components retain their own licences.
 
-Install Node.js 22 or later and make tar available. Run npm ci --ignore-scripts, then npm run build:rewrite. The build recreates the deployed viewer under .local/rewrite-assets/rewrite/. It uses the pinned npm package for Scramjet 1.1.0 and the readable cookie/storage adapters and explicit replacements in the build script.
+Install Node.js 22 or later and make tar available. Run npm ci --ignore-scripts, then npm run build:rewrite. The build recreates the deployed viewer under .local/rewrite-assets/rewrite/. It uses the pinned npm package for Scramjet 1.1.0, the readable cookie/storage adapters, rewrite/scramjet-compat.js for the Google indirect-eval correction, and explicit replacements in the build script. Compatibility replacements fail if the expected upstream module differs.
 
 The upstream source archive is distributed beside this download as scramjet-57ba89e.tar.gz. It contains the TypeScript code, Rust rewriter, Cargo lockfile, WebAssembly build script, and upstream build instructions from revision ${upstreamRevision}. Extract it to modify and rebuild the upstream engine.
 

@@ -26,7 +26,7 @@ async function fixtureFetch(request) {
       if (target.pathname === '/route') return new Response('<h1 id="egress">home</h1>', { headers: {
         'x-projlib-response': encodeURIComponent(JSON.stringify({ status: 200, statusText: 'OK', headers: { 'content-type': 'text/html' } }))
       } });
-      if (target.pathname.startsWith('/adblock') || target.hostname === 'pagead2.googlesyndication.com') {
+      if (target.pathname.startsWith('/adblock') || target.pathname === '/eval-semantics' || target.hostname === 'pagead2.googlesyndication.com') {
         const response = await fixtureFetch(new Request(target, { method: metadata.method, headers: metadata.headers,
           body: ['GET', 'HEAD'].includes(metadata.method) ? undefined : await request.arrayBuffer() }));
         return new Response(response.body, { headers: { 'x-projlib-response': encodeURIComponent(JSON.stringify({ status: response.status,
@@ -41,6 +41,28 @@ async function fixtureFetch(request) {
       return new Response('window.adNetworkReached=true;', { headers: { 'content-type': 'text/javascript' } });
     }
     if (url.pathname === '/route') return new Response('<h1 id="egress">cloudflare</h1>', { headers: { 'content-type': 'text/html' } });
+    if (url.pathname === '/eval-semantics') return new Response(`<!doctype html><html><head><title>Eval semantics fixture</title></head><body>
+      <h1>JavaScript semantics fixture</h1><pre id="evalResults">Waiting</pre><script>
+      (()=>{
+        const localValue=7;
+        const indirect=(0,eval);
+        globalThis.projlibEvalMarker=0;
+        const value=indirect('21+21');
+        indirect('globalThis.projlibEvalMarker=5');
+        const object={fixture:true};
+        const boxed=Object('21+21');
+        let thrownType=null;
+        try{indirect('throw new RangeError("fixture-eval")');}catch(error){thrownType=error.name;}
+        document.getElementById('evalResults').textContent=JSON.stringify({
+          valueType:typeof value,value:typeof value==='number'?value:null,
+          sideEffect:globalThis.projlibEvalMarker,directScope:eval('localValue+1'),
+          indirectCannotSeeLocal:indirect('typeof localValue')==='undefined',
+          objectIdentity:indirect(object)===object,boxedStringIdentity:indirect(boxed)===boxed,
+          undefinedUnchanged:indirect(undefined)===undefined,thrownType,
+          strictThisUndefined:indirect('"use strict"; (function(){return this})()')===undefined
+        });
+      })();
+      </script></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     if (url.pathname === '/adblock/count') return Response.json({ requests: adRequests });
     if (url.pathname === '/adblock/ordinary.js') return new Response('window.regularAssetLoaded=true;', { headers: { 'content-type': 'text/javascript' } });
     if (url.pathname.startsWith('/adblock/tracker')) return new Response('ordinary fixture response');
